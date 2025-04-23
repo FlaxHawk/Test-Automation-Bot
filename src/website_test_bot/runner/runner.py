@@ -54,8 +54,20 @@ def setup_pytest_environment(
         "-v",
         f"--numprocesses={config.test.concurrency}",
         f"--maxfail={config.test.concurrency * 2}",
-        f"--reruns={config.test.retry_failed}",
     ]
+
+    # Check if pytest-rerunfailures is installed
+    try:
+        import pytest_rerunfailures
+
+        # Only add reruns if the plugin is available
+        if config.test.retry_failed > 0:
+            pytest_args.append(f"--reruns={config.test.retry_failed}")
+    except ImportError:
+        print(
+            "Warning: pytest-rerunfailures not installed, --reruns flag will not be used"
+        )
+
     # Add report arguments
     pytest_args.extend(report_args)
     # Set environment variables

@@ -111,7 +111,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install poetry
+        # Install with all extras to ensure all dependencies are available
         poetry install
+        # Explicitly install test dependencies in case they're missing
+        poetry add pytest-rerunfailures pytest-html pytest-xdist
     - name: Install Playwright browsers
       run: |
         poetry run playwright install --with-deps chromium
