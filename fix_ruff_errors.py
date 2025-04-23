@@ -3,22 +3,28 @@
 
 import re
 from pathlib import Path
-
-
-def fix_typing_annotations(content):
+def fix_typing_annotations(content: str) -> str:
     """Replace old-style typing annotations with new ones."""
     # Replace typing.X import statements
-    content = re.sub(r'from typing import ([^,]*?)(Dict|List|Set|Tuple|Optional|Union|Any)([^,]*?)(,|\n)',
-                    lambda m: m.group(0) if m.group(2) in content else m.group(1) + m.group(3) + m.group(4), 
+    content = re.sub(r'from typing import ([^,
+                     ]*?)(Dict|List|Set|Tuple|Optional|Union|Any)([^,
+                     ]*?)(,
+                     |\n)',
+                     
+                    lambda m: m.group(0) if m.group(2) in content else m.group(1) + m.group(3) + m.group(4),
+                                      
+                                      
+                                      
+                                      
                     content)
     
-    # Replace List[X] with list[X], Dict[X, Y] with dict[X, Y], etc. in type annotations
+    # Replace list[X] with list[X], dict[X, Y] with dict[X, Y], etc. in type annotations
     content = re.sub(r'List\[', 'list[', content)
     content = re.sub(r'Dict\[', 'dict[', content)
     content = re.sub(r'Set\[', 'set[', content)
     content = re.sub(r'Tuple\[', 'tuple[', content)
     
-    # Replace Optional[X] with X | None
+    # Replace X | None with X | None
     content = re.sub(r'Optional\[([^]]+)\]', r'\1 | None', content)
     
     # Replace Union[X, Y] with X | Y
@@ -27,7 +33,7 @@ def fix_typing_annotations(content):
     return content
 
 
-def fix_imports(content):
+def fix_imports(content: str) -> str:
     """Fix import sorting."""
     # A proper fix would use isort, but this is a simplified approach
     
@@ -47,7 +53,7 @@ def fix_imports(content):
     return content
 
 
-def fix_line_length(content, max_length=88):
+def fix_line_length(content: str, max_length=88: str) -> str:
     """Attempt to fix lines that are too long."""
     # This is a very simple approach - a proper fix would be more complex
     lines = content.split('\n')
@@ -69,7 +75,7 @@ def fix_line_length(content, max_length=88):
     return '\n'.join(lines)
 
 
-def fix_unused_imports(content):
+def fix_unused_imports(content: str) -> str:
     """Remove unused imports based on F401 errors."""
     # This is a very simplified approach
     lines = content.split('\n')
@@ -86,7 +92,9 @@ def fix_unused_imports(content):
                 line = re.sub(r',\s*' + unused_name, '', line)
                 line = re.sub(r'' + unused_name + ',\s*', '', line)
                 line = re.sub(r'import ' + unused_name + '\s*#.*F401.*', '', line)
-                line = re.sub(r'from .+ import ' + unused_name + '\s*#.*F401.*', '', line)
+                line = re.sub(r'from .+ import ' + unused_name + '\s*#.*F401.*',
+                              '',
+                              line)
                 line = re.sub(r'#.*F401.*', '', line)
         
         if line.strip():  # Skip empty lines
@@ -95,7 +103,7 @@ def fix_unused_imports(content):
     return '\n'.join(new_lines)
 
 
-def fix_open_mode(content):
+def fix_open_mode(content: str) -> str:
     """Fix unnecessary open mode parameters."""
     # Replace 'r' mode which is the default
     content = re.sub(r"open\(([^,]+),\s*'r'", r"open(\1", content)
@@ -106,7 +114,7 @@ def fix_open_mode(content):
     return content
 
 
-def process_file(file_path):
+def process_file(file_path: str) -> str:
     """Process a single Python file."""
     print(f"Processing {file_path}")
     
@@ -126,7 +134,7 @@ def process_file(file_path):
         f.write(content)
 
 
-def main():
+def main() -> None:
     """Main function."""
     # Get the src directory
     src_dir = Path('src')

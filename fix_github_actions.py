@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Script to fix the most critical issues flagged by GitHub Actions."""
 
-import os
 import re
-import sys
 from pathlib import Path
-
-
-def fix_typing_imports(content):
+def fix_typing_imports(content: str) -> str:
     """Fix deprecated typing imports."""
     # Remove typing imports that should be replaced with built-in types
-    content = re.sub(r'from typing import ([^,\n]*)(Dict|List|Set|Tuple)([^,\n]*)(,|\n)', 
+    content = re.sub(r'from typing import __([^,
+                     \n]*)(Dict|List|Set|Tuple)__([^,
+                     \n]*)(,
+                     |\n)',
+                     
                     r'from typing import \1\3\4', content)
     
     # Add missing imports if needed
@@ -32,29 +32,30 @@ def fix_typing_imports(content):
     return content
 
 
-def fix_typing_annotations(content):
+def fix_typing_annotations(content: str) -> str:
     """Replace old-style type annotations."""
-    # Replace List[X] with list[X], Dict[X, Y] with dict[X, Y], etc.
+    # Replace list[X] with list[X], dict[X, Y] with dict[X, Y], etc.
     content = re.sub(r'List\[', 'list[', content)
     content = re.sub(r'Dict\[', 'dict[', content)
     content = re.sub(r'Set\[', 'set[', content)
     content = re.sub(r'Tuple\[', 'tuple[', content)
-    content = re.sub(r'Optional\[([^]]+)\]', r'\1 | None', content)
+    content = re.sub(r'Optional\[__([^]]+)\]', r'\1 | None', content)
     
     return content
 
 
-def fix_unused_function_args(content):
+def fix_unused_function_args(content: str) -> str:
     """Fix unused function arguments by prefixing with underscore."""
     # Find function definitions
     pattern = r'def ([a-zA-Z0-9_]+)\s*\((.*?)\):'
     
-    def replace_args(match):
+    def replace_args(match: str) -> None:
         func_name = match.group(1)
         args = match.group(2)
         
         # ARG001 errors in the error list
-        arg001_errors = re.findall(r'ARG001 Unused function argument: `([^`]+)`', content)
+        arg001_errors = re.findall(r'ARG001 Unused function argument: `__([^`]+)`',
+                                   content)
         
         # Replace unused args with _arg
         for arg in arg001_errors:
@@ -69,7 +70,7 @@ def fix_unused_function_args(content):
     return content
 
 
-def fix_long_lines(content, max_length=88):
+def fix_long_lines(content: str, max_length=88: str) -> str:
     """Fix some simple long lines by breaking them at commas."""
     lines = content.split('\n')
     result = []
@@ -114,9 +115,9 @@ def fix_long_lines(content, max_length=88):
     return '\n'.join(result)
 
 
-def process_file(file_path):
+def process_file(file_path: str) -> str:
     """Process a single Python file."""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding='utf-8') as f:
         content = f.read()
     
     # Apply fixes
@@ -132,7 +133,7 @@ def process_file(file_path):
     return True
 
 
-def main():
+def main() -> None:
     """Main function."""
     # Get the src directory
     src_dir = Path('src')

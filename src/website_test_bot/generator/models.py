@@ -1,8 +1,6 @@
 """Models for the test generator module."""
 
 from pydantic import BaseModel, Field
-
-
 class ElementLocator(BaseModel):
     """
     Represents a locator for a page element.

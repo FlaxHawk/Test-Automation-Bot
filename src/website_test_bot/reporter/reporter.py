@@ -1,9 +1,9 @@
 """Report generator module for creating test reports."""
-from pathlib import Path
 from typing import list, dict, List, Optional, Union, Any
+import os
+from pathlib import Path
 import datetime
 import json
-import os
 import shutil
 import zipfile
 from website_test_bot.config import Config
@@ -19,15 +19,15 @@ def generate_summary_json(test_results: TestResults, output_path: str) -> str:
     """
     # Create summary data
     summary = {
-        "timestamp": datetime.datetime.now().isoformat()
-        "summary": test_results.summary
-        "browsers": test_results.browsers
+        "timestamp": datetime.datetime.now().isoformat(),
+        "summary": test_results.summary,
+        "browsers": test_results.browsers,
         "files": [
             {
-                "path": file.file_path
-                "passed": sum(1 for tc in file.test_cases if tc.status == "passed")
-                "failed": sum(1 for tc in file.test_cases if tc.status == "failed")
-                "skipped": sum(1 for tc in file.test_cases if tc.status == "skipped")
+                "path": file.file_path,
+                "passed": sum(1 for tc in file.test_cases if tc.status == "passed"),
+                "failed": sum(1 for tc in file.test_cases if tc.status == "failed"),
+                "skipped": sum(1 for tc in file.test_cases if tc.status == "skipped"),
                 "duration": file.duration
             }
             for file in test_results.test_files
@@ -150,9 +150,9 @@ def create_archive(base_dir: str, output_path: str) -> str:
                 zipf.write(file_path, rel_path)
     return output_path
 def generate_html_index(
-    test_results: TestResults
-    report_files: dict[str, str]
-    artifacts: dict[str, list[str]]
+    test_results: TestResults,
+    report_files: dict[str, str],
+    artifacts: dict[str, list[str]],
     output_path: str
 ) -> str:
     """
@@ -169,7 +169,8 @@ def generate_html_index(
     num_screenshots = len(artifacts.get("screenshots", []))
     num_videos = len(artifacts.get("videos", []))
     num_traces = len(artifacts.get("traces", []))
-    # Create HTML
+    
+    # Create HTML - using raw string to avoid syntax issues
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -177,13 +178,14 @@ def generate_html_index(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website Test Bot Report</title>
     <style>
-        body {
-    { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }}
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }}
         .container {{ max-width: 1200px; margin: 0 auto; }}
         h1, h2, h3 {{ color: #333; }}
         .summary {{ display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }}
-        .card {{ background: #f5f5f5; border-radius: 5px; padding: 15px; flex: 1; min-width: 200px; box-shadow: 0 2px 4px rgba(
-    0,0,0,0.1); }}
+        .card {{ background: #f5f5f5; border-radius: 5px; padding: 15px; flex: 1; min-width: 200px; box-shadow: 0 2px 4px rgba(0,
+                                                                                                                               0,
+                                                                                                                               0,
+                                                                                                                               0.1); }}
         .card h3 {{ margin-top: 0; }}
         .passed {{ color: #4caf50; }}
         .failed {{ color: #f44336; }}
@@ -193,8 +195,7 @@ def generate_html_index(
         th {{ background-color: #f2f2f2; }}
         tr:hover {{ background-color: #f5f5f5; }}
         .links {{ margin-bottom: 20px; }}
-        .links a {
-    { display: inline-block; margin-right: 15px; padding: 8px 15px; background: #2196f3; color: white; text-decoration: none; border-radius: 4px; }}
+        .links a {{ display: inline-block; margin-right: 15px; padding: 8px 15px; background: #2196f3; color: white; text-decoration: none; border-radius: 4px; }}
         .links a:hover {{ background: #0b7dda; }}
     </style>
 </head>
@@ -208,14 +209,13 @@ def generate_html_index(
                 <p><span class="passed">Passed: {test_results.passed}</span></p>
                 <p><span class="failed">Failed: {test_results.failed}</span></p>
                 <p><span class="skipped">Skipped: {test_results.skipped}</span></p>
-                <p>Total: {
-    test_results.passed + test_results.failed + test_results.skipped}</p>
+                <p>Total: {test_results.passed + test_results.failed + test_results.skipped}</p>
                 <p>Duration: {test_results.duration:.2f}s</p>
             </div>
             <div class="card">
                 <h3>Browsers</h3>
-                {''.join(
-    f'<p>{browser}: {count}</p>' for browser, count in test_results.browsers.items())}
+                {''.join(f'<p>{browser}: {count}</p>' for browser,
+                         count in test_results.browsers.items())}
             </div>
             <div class="card">
                 <h3>Artifacts</h3>
@@ -226,10 +226,8 @@ def generate_html_index(
         </div>
         <div class="links">
             <h2>Reports</h2>
-            {
-    '<a href="report.html" target="_blank">HTML Report</a>' if 'html' in report_files else ''}
-            {
-    '<a href="report.xml" target="_blank">JUnit Report</a>' if 'junit' in report_files else ''}
+            {'<a href="report.html" target="_blank">HTML Report</a>' if 'html' in report_files else ''}
+            {'<a href="report.xml" target="_blank">JUnit Report</a>' if 'junit' in report_files else ''}
             <a href="summary.json" target="_blank">Summary JSON</a>
         </div>
         <h2>Test Files</h2>
@@ -242,33 +240,30 @@ def generate_html_index(
                 <th>Duration</th>
             </tr>
             {''.join(f'''<tr>
-                <td>{os.path.basename(file.file_path)}</td>
-                <td class="passed">{sum(
-    1 for tc in file.test_cases if tc.status == 'passed')}</td>
-                <td class="failed">{sum(
-    1 for tc in file.test_cases if tc.status == 'failed')}</td>
-                <td class="skipped">{sum(
-    1 for tc in file.test_cases if tc.status == 'skipped')}</td>
+                <td>{file.file_path}</td>
+                <td>{sum(1 for tc in file.test_cases if tc.status == 'passed')}</td>
+                <td>{sum(1 for tc in file.test_cases if tc.status == 'failed')}</td>
+                <td>{sum(1 for tc in file.test_cases if tc.status == 'skipped')}</td>
                 <td>{file.duration:.2f}s</td>
             </tr>''' for file in test_results.test_files)}
         </table>
         {f'''<div class="links">
             <h2>Screenshots</h2>
-            {''.join(
-    f'<a href="{os.path.relpath(screenshot,
-                                os.path.dirname(output_path))}" target="_blank">{os.path.basename(screenshot)}</a> ' for screenshot in artifacts.get('screenshots', []))}
+            {''.join(f'<a href="screenshots/{os.path.basename(screenshot)}"' +
+    f' target="_blank">{os.path.basename(screenshot)}</a> ' 
+                     for screenshot in artifacts.get('screenshots', []))}
         </div>''' if artifacts.get('screenshots') else ''}
         {f'''<div class="links">
             <h2>Videos</h2>
-            {''.join(
-    f'<a href="{os.path.relpath(video,
-                                os.path.dirname(output_path))}" target="_blank">{os.path.basename(video)}</a> ' for video in artifacts.get('videos', []))}
+            {''.join(f'<a href="videos/{os.path.basename(video)}"' +
+    f' target="_blank">{os.path.basename(video)}</a> ' 
+                     for video in artifacts.get('videos', []))}
         </div>''' if artifacts.get('videos') else ''}
         {f'''<div class="links">
             <h2>Traces</h2>
-            {''.join(
-    f'<a href="{os.path.relpath(trace,
-                                os.path.dirname(output_path))}" target="_blank">{os.path.basename(trace)}</a> ' for trace in artifacts.get('traces', []))}
+            {''.join(f'<a href="traces/{os.path.basename(trace)}"' +
+    f' target="_blank">{os.path.basename(trace)}</a> ' 
+                     for trace in artifacts.get('traces', []))}
         </div>''' if artifacts.get('traces') else ''}
     </div>
 </body>
@@ -285,34 +280,33 @@ def generate_report(test_results: TestResults, config: Config) -> str:
         test_results: Test results
         config: Bot configuration
     Returns:
-        str: Path to the report
+        str: Path to the generated report
     """
-    # Create timestamp
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # Create output directory
-    output_dir = os.path.join(config.report.output_dir, "report", timestamp)
+    # Create output directory for this report
+    output_dir = config.report.output_dir
     os.makedirs(output_dir, exist_ok=True)
+    # Create artifact directories
+    for artifact_dir in ["screenshots", "videos", "traces"]:
+        os.makedirs(os.path.join(output_dir, artifact_dir), exist_ok=True)
+    # Generate summary JSON
+    summary_path = generate_summary_json(
+        test_results, os.path.join(output_dir, "summary.json"))
     # Copy report files
     report_files = copy_report_files(test_results, output_dir)
     # Collect artifacts
     artifacts = {}
-    if config.report.include_screenshots:
-        artifacts["screenshots"] = collect_screenshots(test_results, output_dir)
-    if config.report.include_videos:
-        artifacts["videos"] = collect_videos(test_results, output_dir)
-    if config.report.include_traces:
-        artifacts["traces"] = collect_traces(test_results, output_dir)
-    # Generate summary JSON
-    summary_path = generate_summary_json(
-    test_results, os.path.join(output_dir, "summary.json"))
+    artifacts["screenshots"] = collect_screenshots(test_results, output_dir)
+    artifacts["videos"] = collect_videos(test_results, output_dir)
+    artifacts["traces"] = collect_traces(test_results, output_dir)
     # Generate HTML index
     index_path = generate_html_index(
-        test_results
-        report_files
-        artifacts
+        test_results,
+        report_files,
+        artifacts,
         os.path.join(output_dir, "index.html")
     )
     # Create archive
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     archive_path = os.path.join(config.report.output_dir, f"report_{timestamp}.zip")
     create_archive(output_dir, archive_path)
     return index_path 

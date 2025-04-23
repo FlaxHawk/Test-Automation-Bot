@@ -1,7 +1,5 @@
 """Models for the crawler module."""
 from pydantic import BaseModel, Field
-
-
 class CrawlElement(BaseModel):
     """
     Represents an element found during crawling.

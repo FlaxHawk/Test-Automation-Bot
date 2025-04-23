@@ -1,19 +1,16 @@
 """Command-line interface for the Website Test Bot."""
-import datetime
 import os
-
-import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-
+import datetime
+import typer
 from website_test_bot import __version__
 from website_test_bot.config import load_config, merge_cli_args
 from website_test_bot.crawler import crawl_website_sync
 from website_test_bot.generator import generate_tests
 from website_test_bot.reporter import generate_report
 from website_test_bot.runner import run_tests
-
 # Create Typer app
 app = typer.Typer(
     name="Website Test Bot",
@@ -29,7 +26,7 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 @app.callback()
 def main(
-    version: bool = typer.Option(
+    _version: bool = typer.Option(
         False, "--version", "-v", callback=version_callback, help="Show version and exit."
     )
 ) -> None:

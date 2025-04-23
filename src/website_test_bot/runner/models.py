@@ -1,8 +1,6 @@
 """Models for the test runner module."""
 
 from pydantic import BaseModel, Field
-
-
 class TestCase(BaseModel):
     """
     Represents a test case result.

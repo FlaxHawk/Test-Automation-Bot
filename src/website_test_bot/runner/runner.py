@@ -1,15 +1,11 @@
 """Test runner module for executing generated tests."""
 import os
+from .models import TestCase, TestFile, TestResults
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
-
 from website_test_bot.config import Config
 from website_test_bot.generator.models import GeneratedFile
-
-from .models import TestCase, TestFile, TestResults
-
-
 def get_test_files(test_dir: str) -> list[str]:
     """
     Get all test files in a directory.
@@ -42,7 +38,7 @@ def setup_pytest_environment(
     report_args = []
     if config.report.format in ["html", "both"]:
         report_args.extend([
-            "--html", os.path.join(report_dir, "report.html")
+            "--html", os.path.join(report_dir, "report.html"),
             "--self-contained-html"
         ])
     if config.report.format in ["junit", "both"]:
@@ -51,9 +47,9 @@ def setup_pytest_environment(
         ])
     # Configure Pytest arguments
     pytest_args = [
-        "-v"
-        f"--numprocesses={config.test.concurrency}"
-        f"--maxfail={config.test.concurrency * 2}"
+        "-v",
+        f"--numprocesses={config.test.concurrency}",
+        f"--maxfail={config.test.concurrency * 2}",
         f"--reruns={config.test.retry_failed}"
     ]
     # Add report arguments
@@ -71,7 +67,8 @@ def setup_pytest_environment(
         env_vars["PWVIDEO"] = "1"
     return pytest_args, env_vars
 def run_pytest(
-    test_files: list[str], test_dir: str, config: Config) -> subprocess.CompletedProcess:
+    test_files: list[str], test_dir: str, config: Config
+) -> subprocess.CompletedProcess:
     """
     Run Pytest on test files.
     Args:
@@ -85,12 +82,8 @@ def run_pytest(
     # Build command
     cmd = [sys.executable, "-m", "pytest"] + pytest_args + test_files
     # Run command
-    process = subprocess.run(
-        cmd
-        env=env_vars
-        stdout=subprocess.PIPE
-        stderr=subprocess.PIPE
-        text=True
+    process = subprocess.run(cmd, capture_output=True,
+        text=True,
         cwd=test_dir
     )
     return process
@@ -132,10 +125,10 @@ def parse_junit_report(report_path: str) -> list[TestCase]:
                 message = skipped_elem.get("message", "")
             # Create test case
             test_case = TestCase(
-                name=name
-                status=status
-                message=message
-                duration=duration
+                name=name,
+                status=status,
+                message=message,
+                duration=duration,
                 browser=browser
             )
             # Add to list
@@ -187,8 +180,8 @@ def collect_artifacts(test_dir: str, test_cases: list[TestCase]) -> None:
                     if test_case.browser == browser:
                         test_case.video_path = video_path
 def create_test_results(
-    test_cases: list[TestCase]
-    test_dir: str
+    test_cases: list[TestCase],
+    test_dir: str,
     process: subprocess.CompletedProcess
 ) -> TestResults:
     """
@@ -202,10 +195,10 @@ def create_test_results(
     """
     # Create test results
     results = TestResults(
-        passed=sum(1 for tc in test_cases if tc.status == "passed")
-        failed=sum(1 for tc in test_cases if tc.status == "failed")
-        skipped=sum(1 for tc in test_cases if tc.status == "skipped")
-        duration=sum(tc.duration for tc in test_cases)
+        passed=sum(1 for tc in test_cases if tc.status == "passed"),
+        failed=sum(1 for tc in test_cases if tc.status == "failed"),
+        skipped=sum(1 for tc in test_cases if tc.status == "skipped"),
+        duration=sum(tc.duration for tc in test_cases),
         report_dir=os.path.join(test_dir, "reports")
     )
     # Set report paths
@@ -226,8 +219,8 @@ def create_test_results(
     # Create test files
     for file_path, file_test_cases in test_files.items():
         test_file = TestFile(
-            file_path=file_path
-            test_cases=file_test_cases
+            file_path=file_path,
+            test_cases=file_test_cases,
             duration=sum(tc.duration for tc in file_test_cases)
         )
         results.test_files.append(test_file)
@@ -238,11 +231,11 @@ def create_test_results(
         results.browsers[test_case.browser] += 1
     # Add summary information
     results.summary = {
-        "total": len(test_cases)
-        "passed": results.passed
-        "failed": results.failed
-        "skipped": results.skipped
-        "duration": results.duration
+        "total": len(test_cases),
+        "passed": results.passed,
+        "failed": results.failed,
+        "skipped": results.skipped,
+        "duration": results.duration,
         "browsers": len(results.browsers)
     }
     return results
@@ -271,10 +264,10 @@ def run_tests(generated_files: list[GeneratedFile], config: Config) -> TestResul
         for file_path in test_files:
             test_cases.append(
                 TestCase(
-                    name=os.path.basename(file_path)
-                    status="failed" if process.returncode != 0 else "passed"
-                    message=process.stderr if process.returncode != 0 else None
-                    duration=0.0
+                    name=os.path.basename(file_path),
+                    status="failed" if process.returncode != 0 else "passed",
+                    message=process.stderr if process.returncode != 0 else None,
+                    duration=0.0,
                     browser="chromium"
                 )
             )

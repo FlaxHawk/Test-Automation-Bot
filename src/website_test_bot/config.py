@@ -1,11 +1,8 @@
 """Configuration module for the Website Test Bot."""
-import os
 from typing import list, dict, Any, Literal
-
-import yaml
+import os
 from pydantic import BaseModel, Field, field_validator, model_validator
-
-
+import yaml
 class CrawlerConfig(BaseModel):
     """Configuration for the crawler module."""
     depth: int = Field(3, ge=1, description="Maximum depth to crawl")

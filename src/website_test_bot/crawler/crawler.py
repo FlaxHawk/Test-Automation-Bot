@@ -1,14 +1,14 @@
 """Crawler module for discovering website pages and elements."""
 from typing import tuple, list, List, Optional, Set, Tuple
-import asyncio
-import datetime
 import os
 import re
-import time
-import urllib.parse
+from .models import CrawlData, CrawlPage, CrawlElement, CrawlForm
 from playwright.async_api import async_playwright, Browser, Page, ElementHandle
 from rich.console import Console
-from .models import CrawlData, CrawlPage, CrawlElement, CrawlForm
+import asyncio
+import datetime
+import time
+import urllib.parse
 from website_test_bot.config import Config
 # Create console
 console = Console()
@@ -43,14 +43,15 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
         method = await form_element.get_attribute("method") or "GET"
         # Create form object
         form = CrawlForm(
-            form_selector=form_selector
-            action=action
+            form_selector=form_selector,
+            action=action,
             method=method.upper()
         )
         # Find form fields
         input_elements = await form_element.query_selector_all(
-            "input:not(
-    [type='submit']):not([type='button']):not([type='reset']), select, textarea"
+            'input:not([type="submit"]):not([type="button"]):not([type="reset"]),
+                       select,
+                       textarea'
         )
         for input_element in input_elements:
             # Get field attributes
@@ -68,15 +69,15 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
                 element_selector += f"input[type='{input_type}']"
             # Create field element
             field_element = CrawlElement(
-                selector=element_selector
-                element_type=f"input-{input_type}"
-                text=input_placeholder
+                selector=element_selector,
+                element_type=f"input-{input_type}",
+                text=input_placeholder,
                 attributes={
-                    "type": input_type
-                    "name": input_name or ""
-                    "id": input_id or ""
+                    "type": input_type,
+                    "name": input_name or "",
+                    "id": input_id or "",
                     "placeholder": input_placeholder or ""
-                }
+                },
                 is_visible=await input_element.is_visible()
             )
             # Add field to form
@@ -104,14 +105,13 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
             if submit_id:
                 submit_selector += f"#{submit_id}"
             else:
-                submit_selector += "input[type='submit'], button[type='submit'], button:not(
-    [type])"
+                submit_selector += "input[type='submit'], button[type='submit'], button:not([type])"
             # Create submit button element
             form.submit_button = CrawlElement(
-                selector=submit_selector
-                element_type="submit"
-                text=submit_text.strip()
-                is_clickable=True
+                selector=submit_selector,
+                element_type="submit",
+                text=submit_text.strip(),
+                is_clickable=True,
                 is_visible=await submit_element.is_visible()
             )
         forms.append(form)
@@ -139,16 +139,15 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
         for element_handle in element_handles:
             try:
                 # Get element attributes
-                element_type = await element_handle.get_attribute(
-    "type") or selector.split("[")[0]
+                element_type = await element_handle.get_attribute("type") or selector.split("[")[0]
                 element_text = await element_handle.text_content() or ""
                 element_href = await element_handle.get_attribute("href") or ""
                 element_id = await element_handle.get_attribute("id") or ""
                 element_class = await element_handle.get_attribute("class") or ""
                 # Create element attributes
                 attributes = {
-                    "id": element_id
-                    "class": element_class
+                    "id": element_id,
+                    "class": element_class,
                     "href": element_href
                 }
                 # Create element selector
@@ -166,11 +165,11 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
                 is_clickable = is_visible
                 # Create element
                 element = CrawlElement(
-                    selector=custom_selector
-                    element_type=element_type
-                    text=element_text.strip()
-                    attributes=attributes
-                    is_clickable=is_clickable
+                    selector=custom_selector,
+                    element_type=element_type,
+                    text=element_text.strip(),
+                    attributes=attributes,
+                    is_clickable=is_clickable,
                     is_visible=is_visible
                 )
                 elements.append(element)
@@ -201,8 +200,12 @@ async def extract_links(page: Page, base_url: str) -> list[str]:
                     # Remove fragment
                     url_parts = urllib.parse.urlparse(absolute_url)
                     clean_url = urllib.parse.urlunparse(
-                        (
-    url_parts.scheme, url_parts.netloc, url_parts.path, url_parts.params, url_parts.query, "")
+                        (url_parts.scheme,
+                         url_parts.netloc,
+                         url_parts.path,
+                         url_parts.params,
+                         url_parts.query,
+                         "")
                     )
                     links.append(clean_url)
         except Exception:
@@ -210,11 +213,11 @@ async def extract_links(page: Page, base_url: str) -> list[str]:
             pass
     return links
 async def crawl_page(
-    browser: Browser
-    url: str
-    output_dir: str
-    depth: int
-    parent_url: str | None
+    browser: Browser,
+    url: str,
+    output_dir: str,
+    depth: int,
+    parent_url: str | None,
     config: Config
 ) -> CrawlPage:
     """
@@ -231,15 +234,14 @@ async def crawl_page(
     """
     # Create page
     context = await browser.new_context(
-        viewport={
-    "width": config.test.viewport.width, "height": config.test.viewport.height}
+        viewport={"width": config.test.viewport.width, "height": config.test.viewport.height},
         user_agent=config.crawler.user_agent
     )
     page = await context.new_page()
     # Create crawl page
     crawl_page = CrawlPage(
-        url=url
-        depth=depth
+        url=url,
+        depth=depth,
         parent_url=parent_url
     )
     try:
@@ -249,8 +251,8 @@ async def crawl_page(
         os.makedirs(page_dir, exist_ok=True)
         # Navigate to page
         response = await page.goto(
-            url
-            timeout=config.crawler.page_timeout_ms
+            url,
+            timeout=config.crawler.page_timeout_ms,
             wait_until="domcontentloaded"
         )
         # Wait for page to load
@@ -324,7 +326,7 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
     os.makedirs(crawl_dir, exist_ok=True)
     # Initialize crawl data
     crawl_data = CrawlData(
-        base_url=url
+        base_url=url,
         start_time=timestamp
     )
     # Create browser
@@ -363,11 +365,11 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
                     crawl_data.failed_urls[page.url] = page.error_message or "Unknown error"
         # Calculate statistics
         crawl_data.stats = {
-            "pages": len(crawl_data.pages)
-            "failed": len(crawl_data.failed_urls)
-            "depth": crawl_data.crawl_depth
-            "links": sum(len(p.links) for p in crawl_data.pages.values())
-            "forms": sum(len(p.forms) for p in crawl_data.pages.values())
+            "pages": len(crawl_data.pages),
+            "failed": len(crawl_data.failed_urls),
+            "depth": crawl_data.crawl_depth,
+            "links": sum(len(p.links) for p in crawl_data.pages.values()),
+            "forms": sum(len(p.forms) for p in crawl_data.pages.values()),
             "elements": sum(len(p.elements) for p in crawl_data.pages.values())
         }
     finally:

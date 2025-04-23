@@ -2,10 +2,8 @@
 Example test for the Playwright TodoMVC example.
 This demonstrates how to write tests manually for comparison with the auto-generated tests.
 """
-import pytest
 from playwright.sync_api import Page, expect
-
-
+import pytest
 class TodoPage:
     """Page object for the TodoMVC app."""
     def __init__(self, page: Page) -> None:
