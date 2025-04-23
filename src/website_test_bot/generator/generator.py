@@ -248,8 +248,12 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
     if case_type == "navigation":
         return """def test_{page_name}_navigation(page: Page) -> None:
     \"\"\"Test navigation to {page_name}.\"\"\"
+    # Initialize page object
     page_object = {page_object_name}(page)
+    
+    # Navigate to the page
     page_object.navigate()
+    
     # Verify page title
     expect(page).to_have_title(re.compile(r"{title}"))""".format(
             page_name=sanitize_name(page_object.name),
@@ -271,7 +275,10 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
             )
         return """def test_{page_name}_elements(page: Page) -> None:
     \"\"\"Test elements on {page_name}.\"\"\"
+    # Initialize page object
     page_object = {page_object_name}(page)
+    
+    # Navigate to the page
     page_object.navigate()
     {element_assertions}""".format(
             page_name=sanitize_name(page_object.name),
@@ -306,11 +313,16 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
         )
         return """def test_{page_name}_form_submission(page: Page) -> None:
     \"\"\"Test form submission on {page_name}.\"\"\"
+    # Initialize page object
     page_object = {page_object_name}(page)
+    
+    # Navigate to the page
     page_object.navigate()
+    
     # Fill and submit form
     form_data = {sample_data}
     page_object.fill_{form_name}(form_data)
+    
     # Wait for navigation or response
     page.wait_for_load_state("networkidle")""".format(
             page_name=sanitize_name(page_object.name),
@@ -337,13 +349,20 @@ def create_test_from_page_object(page_object: PageObject) -> GeneratedTest:
         name=test_name, file_name=file_name, page_objects=[page_object.name]
     )
     # Add required imports
+    test.imports.add("import os")
+    test.imports.add("import sys")
     test.imports.add("import re")
     test.imports.add("import pytest")
     test.imports.add("from playwright.sync_api import Page, expect")
-    test.imports.add(
-        f"from page_objects.{os.path.splitext(page_object.file_name)[0]} import"
-        + f" {page_object.name}"
-    )
+
+    # Use a more reliable import approach
+    page_object_import = f"""
+# Add the parent directory to sys.path to allow imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from page_objects.{os.path.splitext(page_object.file_name)[0]} import {page_object.name}
+"""
+    test.imports.add(page_object_import)
+
     # Add test cases
     navigation_test = create_test_case(page_object, test_name, "navigation")
     if navigation_test:
@@ -366,13 +385,27 @@ def generate_test_file(test: GeneratedTest, output_dir: str) -> GeneratedFile:
     Returns:
         GeneratedFile: Generated file
     """
-    # Create file content
+    # Process imports to handle multi-line imports properly
+    standard_imports = []
+    special_imports = []
+
+    for imp in test.imports:
+        if "\n" in imp:
+            special_imports.append(imp)
+        else:
+            standard_imports.append(imp)
+
+    # Create file content with proper import handling
     content = """\"\"\"Tests for {name}.\"\"\"
-{imports}
+{standard_imports}
+
+{special_imports}
+
 {test_cases}
 """.format(
         name=test.name,
-        imports="\n".join(sorted(test.imports)),
+        standard_imports="\n".join(sorted(standard_imports)),
+        special_imports="\n".join(special_imports),
         test_cases="\n\n\n".join(test.test_cases.values()),
     )
     # Create file path
@@ -391,10 +424,15 @@ def generate_conftest(browsers: List[str], output_dir: str) -> GeneratedFile:
     """
     # Create content
     content = """\"\"\"Pytest configuration.\"\"\"
-from typing import List, Dict, Generator
 import os
+import sys
+from typing import List, Dict, Generator
 import pytest
 from playwright.sync_api import Playwright, Browser, Page
+
+# Add the parent directory to sys.path to enable imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 @pytest.fixture(scope="session")
 def browser_context_args() -> Dict:
     \"\"\"Fixture to set browser context args.\"\"\"
@@ -402,6 +440,7 @@ def browser_context_args() -> Dict:
         "viewport": {{"width": 1280, "height": 720}},
         "record_video_dir": os.path.join("{output_dir}", "videos")
     }}
+
 @pytest.fixture(
     params=[{browser_params}],
     scope="session"
@@ -414,16 +453,19 @@ def browser_type_launch_args(request) -> Dict:
         "timeout": 30000,
         "args": ["--disable-gpu", "--no-sandbox"]
     }}
+
 @pytest.fixture(scope="session")
 def browser_name(request) -> str:
     \"\"\"Fixture to get browser name.\"\"\"
     return request.param
+
 @pytest.fixture(scope="function")
 def page(browser: Browser) -> Generator[Page, None, None]:
     \"\"\"Fixture to create a new page for each test.\"\"\"
     page = browser.new_page()
     yield page
     page.close()
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     \"\"\"Hook to capture screenshots on test failure.\"\"\"
@@ -487,6 +529,29 @@ def write_generated_files(files: List[GeneratedFile]) -> None:
             f.write(file.content)
 
 
+def generate_pytest_ini(output_dir: str) -> GeneratedFile:
+    """
+    Generate a pytest.ini file to help with test discovery.
+    Args:
+        output_dir: Output directory
+    Returns:
+        GeneratedFile: Generated file
+    """
+    content = """[pytest]
+# Add the current directory to the Python path for imports
+pythonpath = .
+# Configure test discovery
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+# Show verbose output
+addopts = -v
+"""
+    file_path = os.path.join(output_dir, "pytest.ini")
+    return GeneratedFile(file_path=file_path, content=content, file_type="config")
+
+
 def generate_tests(crawl_data: CrawlData, config: Config) -> List[GeneratedFile]:
     """
     Generate tests from crawl data.
@@ -528,10 +593,12 @@ def generate_tests(crawl_data: CrawlData, config: Config) -> List[GeneratedFile]
             test_files.append(file)
     # Generate conftest
     conftest = generate_conftest(config.test.browsers, test_dir)
+    # Generate pytest.ini
+    pytest_ini = generate_pytest_ini(test_dir)
     # Generate __init__.py files
     init_files = generate_init_files([test_dir, page_objects_dir, tests_dir])
     # Combine all files
-    all_files = page_object_files + test_files + [conftest] + init_files
+    all_files = page_object_files + test_files + [conftest, pytest_ini] + init_files
     # Write files
     write_generated_files(all_files)
     return all_files

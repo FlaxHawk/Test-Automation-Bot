@@ -41,6 +41,7 @@ def setup_pytest_environment(
     # Create reports directory
     report_dir = os.path.join(test_dir, "reports")
     os.makedirs(report_dir, exist_ok=True)
+
     # Configure report arguments
     report_args = []
     if config.report.format in ["html", "both"]:
@@ -49,12 +50,23 @@ def setup_pytest_environment(
         )
     if config.report.format in ["junit", "both"]:
         report_args.extend(["--junitxml", os.path.join(report_dir, "report.xml")])
+
     # Configure Pytest arguments
     pytest_args = [
-        "-v",
-        f"--numprocesses={config.test.concurrency}",
-        f"--maxfail={config.test.concurrency * 2}",
+        "-v",  # Verbose output
+        "--rootdir",
+        test_dir,  # Explicitly set the root directory
+        "--import-mode=importlib",  # More reliable import mode
     ]
+
+    # Add concurrency settings if more than one worker requested
+    if config.test.concurrency > 1:
+        pytest_args.extend(
+            [
+                f"--numprocesses={config.test.concurrency}",
+                f"--maxfail={config.test.concurrency * 2}",
+            ]
+        )
 
     # Check if pytest-rerunfailures is installed
     try:
@@ -70,9 +82,18 @@ def setup_pytest_environment(
 
     # Add report arguments
     pytest_args.extend(report_args)
+
     # Set environment variables
     env_vars = os.environ.copy()
-    env_vars["PYTHONPATH"] = f"{test_dir}:{env_vars.get('PYTHONPATH', '')}"
+
+    # Ensure PYTHONPATH includes the test directory and its parent
+    test_parent_dir = os.path.dirname(test_dir)
+    pythonpath = f"{test_dir}:{test_parent_dir}"
+
+    if "PYTHONPATH" in env_vars and env_vars["PYTHONPATH"]:
+        pythonpath = f"{pythonpath}:{env_vars['PYTHONPATH']}"
+
+    env_vars["PYTHONPATH"] = pythonpath
 
     # Ensure headless is always true in GitHub Actions
     force_headless = "GITHUB_ACTIONS" in os.environ
@@ -89,6 +110,7 @@ def setup_pytest_environment(
         env_vars["PWTRACING"] = "on-failure"
     if config.test.video:
         env_vars["PWVIDEO"] = "1"
+
     return pytest_args, env_vars
 
 
@@ -105,15 +127,57 @@ def run_pytest(
         subprocess.CompletedProcess: Completed process
     """
     pytest_args, env_vars = setup_pytest_environment(test_dir, config)
+
+    # Properly set PYTHONPATH to include the test directory
+    env_vars["PYTHONPATH"] = f"{test_dir}:{env_vars.get('PYTHONPATH', '')}"
+
+    # Use pytest directly with the test directory instead of specific files
+    # This allows pytest to handle module imports and test discovery properly
+    if not test_files:
+        print("No test files found!")
+        return subprocess.CompletedProcess(
+            [], returncode=1, stdout="", stderr="No test files found"
+        )
+
     # Build command
     cmd = [sys.executable, "-m", "pytest"] + pytest_args + test_files
 
-    # Print command for debugging
+    # Print debug information
     print(f"Running command: {' '.join(cmd)}")
     print(f"Working directory: {test_dir}")
+    print(f"PYTHONPATH: {env_vars.get('PYTHONPATH', 'Not set')}")
+    print(f"Test files: {test_files}")
+
+    # Create a debug script to help with imports
+    with open(os.path.join(test_dir, "debug_imports.py"), "w") as f:
+        f.write(
+            """
+import sys
+import os
+print(f"Python version: {sys.version}")
+print(f"Current directory: {os.getcwd()}")
+print(f"sys.path: {sys.path}")
+try:
+    import page_objects
+    print("Successfully imported page_objects")
+except ImportError as e:
+    print(f"Failed to import page_objects: {e}")
+"""
+        )
+
+    # Run debug script
+    subprocess.run(
+        [sys.executable, os.path.join(test_dir, "debug_imports.py")],
+        capture_output=True,
+        text=True,
+        cwd=test_dir,
+        env=env_vars,
+    )
 
     # Run command
-    process = subprocess.run(cmd, capture_output=True, text=True, cwd=test_dir)
+    process = subprocess.run(
+        cmd, capture_output=True, text=True, cwd=test_dir, env=env_vars
+    )
 
     # Print output for debugging
     print(f"Pytest return code: {process.returncode}")
