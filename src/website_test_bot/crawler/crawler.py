@@ -1,6 +1,6 @@
 """Crawler module for discovering website pages and elements."""
 
-from typing import tuple, list
+from typing import Tuple, List
 import os
 import re
 from .models import CrawlData, CrawlPage, CrawlElement, CrawlForm
@@ -29,16 +29,16 @@ async def create_browser(config: Config, headless: bool = True) -> Browser:
     return browser
 
 
-async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
+async def extract_forms(page: Page, output_dir: str) -> List[CrawlForm]:
     """
     Extract forms from a page.
     Args:
         page: Playwright page
         output_dir: Directory to save screenshots
     Returns:
-        list[CrawlForm]: List of forms found on the page
+        List[CrawlForm]: List of forms found on the page
     """
-    forms: list[CrawlForm] = []
+    forms: List[CrawlForm] = []
     # Find all forms
     form_elements = await page.query_selector_all("form")
     for i, form_element in enumerate(form_elements):
@@ -121,16 +121,16 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
     return forms
 
 
-async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
+async def extract_elements(page: Page, output_dir: str) -> List[CrawlElement]:
     """
     Extract interactive elements from a page.
     Args:
         page: Playwright page
         output_dir: Directory to save screenshots
     Returns:
-        list[CrawlElement]: List of elements found on the page
+        List[CrawlElement]: List of elements found on the page
     """
-    elements: list[CrawlElement] = []
+    elements: List[CrawlElement] = []
     # Find all interactive elements
     selectors = [
         "a[href]",
@@ -186,16 +186,16 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
     return elements
 
 
-async def extract_links(page: Page, base_url: str) -> list[str]:
+async def extract_links(page: Page, base_url: str) -> List[str]:
     """
     Extract links from a page.
     Args:
         page: Playwright page
         base_url: Base URL of the website
     Returns:
-        list[str]: List of links found on the page
+        List[str]: List of links found on the page
     """
-    links: list[str] = []
+    links: List[str] = []
     # Find all links
     link_elements = await page.query_selector_all("a[href]")
     for link_element in link_elements:
@@ -336,31 +336,30 @@ async def is_url_allowed(url: str, config: Config) -> bool:
 
 async def crawl_website(url: str, config: Config) -> CrawlData:
     """
-    Crawl a website and discover pages.
+    Crawl a website and extract data.
     Args:
         url: URL of the website to crawl
         config: Bot configuration
     Returns:
         CrawlData: Crawled website data
     """
-    # Create output directories
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    crawl_dir = os.path.join(config.report.output_dir, "crawl", timestamp)
-    os.makedirs(crawl_dir, exist_ok=True)
-    # Initialize crawl data
-    crawl_data = CrawlData(base_url=url, start_time=timestamp)
+    # Create output directory
+    output_dir = os.path.join(config.report.output_dir, "crawl_data")
+    os.makedirs(output_dir, exist_ok=True)
     # Create browser
-    browser = await create_browser(config, headless=config.test.headless)
+    browser = await create_browser(config, not config.test.headless)
+    # Initialize crawl data
+    crawl_data = CrawlData(start_url=url, output_dir=output_dir)
+    # Initialize crawl queue and visited set
+    to_crawl: List[Tuple[str, int, str | None]] = [(url, 0, None)]
     try:
-        # Track URLs to crawl
-        to_crawl: list[tuple[str, int, str | None]] = [(url, 0, None)]
         while to_crawl and len(crawl_data.pages) < config.crawler.max_pages:
             # Get batch of URLs to crawl concurrently
             batch = to_crawl[: config.crawler.concurrency]
             to_crawl = to_crawl[config.crawler.concurrency :]
             # Crawl batch
             crawl_tasks = [
-                crawl_page(browser, url, crawl_dir, depth, parent_url, config)
+                crawl_page(browser, url, output_dir, depth, parent_url, config)
                 for url, depth, parent_url in batch
             ]
             crawled_pages = await asyncio.gather(*crawl_tasks)

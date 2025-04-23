@@ -1,6 +1,7 @@
 """Models for the test generator module."""
 
 from pydantic import BaseModel, Field
+from typing import List, Dict, Set, Any, Optional
 
 
 class ElementLocator(BaseModel):
@@ -26,16 +27,16 @@ class PageObject(BaseModel):
     file_name: str = Field(..., description="File name for the page object")
     url: str = Field(..., description="URL of the page")
     title: str = Field("", description="Page title")
-    elements: dict[str, ElementLocator] = Field(
+    elements: Dict[str, ElementLocator] = Field(
         default_factory=dict, description="Element locators by name"
     )
-    forms: dict[str, list[ElementLocator]] = Field(
+    forms: Dict[str, List[ElementLocator]] = Field(
         default_factory=dict, description="Form elements by form name"
     )
-    methods: dict[str, str] = Field(
+    methods: Dict[str, str] = Field(
         default_factory=dict, description="Method implementations by name"
     )
-    imports: set[str] = Field(default_factory=set, description="Required imports")
+    imports: Set[str] = Field(default_factory=set, description="Required imports")
 
 
 class GeneratedTest(BaseModel):
@@ -46,13 +47,13 @@ class GeneratedTest(BaseModel):
 
     name: str = Field(..., description="Test name")
     file_name: str = Field(..., description="File name for the test")
-    page_objects: list[str] = Field(
+    page_objects: List[str] = Field(
         default_factory=list, description="Page objects used in the test"
     )
-    test_cases: dict[str, str] = Field(
+    test_cases: Dict[str, str] = Field(
         default_factory=dict, description="Test case implementations by name"
     )
-    imports: set[str] = Field(default_factory=set, description="Required imports")
+    imports: Set[str] = Field(default_factory=set, description="Required imports")
 
 
 class GeneratedFile(BaseModel):

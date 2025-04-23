@@ -1,6 +1,7 @@
 """Test runner module for executing generated tests."""
 
 import os
+from typing import List, Tuple, Dict
 from .models import TestCase, TestFile, TestResults
 import subprocess
 import sys
@@ -9,13 +10,13 @@ from website_test_bot.config import Config
 from website_test_bot.generator.models import GeneratedFile
 
 
-def get_test_files(test_dir: str) -> list[str]:
+def get_test_files(test_dir: str) -> List[str]:
     """
     Get all test files in a directory.
     Args:
         test_dir: Directory containing tests
     Returns:
-        list[str]: List of test file paths
+        List[str]: List of test file paths
     """
     test_files = []
     tests_path = os.path.join(test_dir, "tests")
@@ -28,14 +29,14 @@ def get_test_files(test_dir: str) -> list[str]:
 
 def setup_pytest_environment(
     test_dir: str, config: Config
-) -> tuple[list[str], dict[str, str]]:
+) -> Tuple[List[str], Dict[str, str]]:
     """
     Set up the Pytest environment.
     Args:
         test_dir: Directory containing tests
         config: Bot configuration
     Returns:
-        tuple[list[str], dict[str, str]]: Pytest arguments and environment variables
+        Tuple[List[str], Dict[str, str]]: Pytest arguments and environment variables
     """
     # Create report directories
     report_dir = os.path.join(test_dir, "reports")
@@ -72,7 +73,7 @@ def setup_pytest_environment(
 
 
 def run_pytest(
-    test_files: list[str], test_dir: str, config: Config
+    test_files: List[str], test_dir: str, config: Config
 ) -> subprocess.CompletedProcess:
     """
     Run Pytest on test files.
@@ -91,13 +92,13 @@ def run_pytest(
     return process
 
 
-def parse_junit_report(report_path: str) -> list[TestCase]:
+def parse_junit_report(report_path: str) -> List[TestCase]:
     """
     Parse a JUnit XML report.
     Args:
         report_path: Path to JUnit XML report
     Returns:
-        list[TestCase]: List of test cases
+        List[TestCase]: List of test cases
     """
     test_cases = []
     # Parse XML
@@ -143,7 +144,7 @@ def parse_junit_report(report_path: str) -> list[TestCase]:
     return test_cases
 
 
-def collect_artifacts(test_dir: str, test_cases: list[TestCase]) -> None:
+def collect_artifacts(test_dir: str, test_cases: List[TestCase]) -> None:
     """
     Collect artifacts for test cases.
     Args:
@@ -188,7 +189,7 @@ def collect_artifacts(test_dir: str, test_cases: list[TestCase]) -> None:
 
 
 def create_test_results(
-    test_cases: list[TestCase], test_dir: str, process: subprocess.CompletedProcess
+    test_cases: List[TestCase], test_dir: str, process: subprocess.CompletedProcess
 ) -> TestResults:
     """
     Create test results from test cases.
@@ -215,7 +216,7 @@ def create_test_results(
     if os.path.exists(junit_report):
         results.junit_report = junit_report
     # Group test cases by file
-    test_files: dict[str, list[TestCase]] = {}
+    test_files: Dict[str, List[TestCase]] = {}
     for test_case in test_cases:
         # Extract file path from test case name
         file_path = test_case.name.split("::")[0]
@@ -247,7 +248,7 @@ def create_test_results(
     return results
 
 
-def run_tests(generated_files: list[GeneratedFile], config: Config) -> TestResults:
+def run_tests(generated_files: List[GeneratedFile], config: Config) -> TestResults:
     """
     Run tests from generated files.
     Args:

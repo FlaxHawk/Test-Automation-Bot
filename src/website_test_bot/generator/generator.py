@@ -9,6 +9,7 @@ from website_test_bot.crawler.models import (
     CrawlPage,
     CrawlElement,
 )
+from typing import List, Dict
 
 
 def sanitize_name(name: str) -> str:
@@ -381,7 +382,7 @@ def generate_test_file(test: GeneratedTest, output_dir: str) -> GeneratedFile:
     return GeneratedFile(file_path=file_path, content=content, file_type="test")
 
 
-def generate_conftest(browsers: list[str], output_dir: str) -> GeneratedFile:
+def generate_conftest(browsers: List[str], output_dir: str) -> GeneratedFile:
     """
     Generate a pytest conftest.py file.
     Args:
@@ -392,7 +393,7 @@ def generate_conftest(browsers: list[str], output_dir: str) -> GeneratedFile:
     """
     # Create content
     content = """\"\"\"Pytest configuration.\"\"\"
-from typing import list, Generator
+from typing import List, Dict, Generator
 import os
 import pytest
 from playwright.sync_api import Playwright, Browser, Page
@@ -455,13 +456,13 @@ def pytest_runtest_makereport(item, call):
     return GeneratedFile(file_path=file_path, content=content, file_type="conftest")
 
 
-def generate_init_files(directories: list[str]) -> list[GeneratedFile]:
+def generate_init_files(directories: List[str]) -> List[GeneratedFile]:
     """
     Generate __init__.py files for directories.
     Args:
         directories: List of directories
     Returns:
-        list[GeneratedFile]: Generated files
+        List[GeneratedFile]: Generated files
     """
     files = []
     for directory in directories:
@@ -474,7 +475,7 @@ def generate_init_files(directories: list[str]) -> list[GeneratedFile]:
     return files
 
 
-def write_generated_files(files: list[GeneratedFile]) -> None:
+def write_generated_files(files: List[GeneratedFile]) -> None:
     """
     Write generated files to disk.
     Args:
@@ -488,14 +489,14 @@ def write_generated_files(files: list[GeneratedFile]) -> None:
             f.write(file.content)
 
 
-def generate_tests(crawl_data: CrawlData, config: Config) -> list[GeneratedFile]:
+def generate_tests(crawl_data: CrawlData, config: Config) -> List[GeneratedFile]:
     """
     Generate tests from crawl data.
     Args:
         crawl_data: Crawled website data
         config: Bot configuration
     Returns:
-        list[GeneratedFile]: Generated files
+        List[GeneratedFile]: Generated files
     """
     # Create output directories
     timestamp = crawl_data.end_time

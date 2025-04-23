@@ -1,6 +1,7 @@
 """Models for the test runner module."""
 
 from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional
 
 
 class TestCase(BaseModel):
@@ -27,7 +28,7 @@ class TestFile(BaseModel):
     """
 
     file_path: str = Field(..., description="Path to the test file")
-    test_cases: list[TestCase] = Field(
+    test_cases: List[TestCase] = Field(
         default_factory=list, description="Test cases in the file"
     )
     duration: float = Field(0.0, description="Total duration in seconds")
@@ -44,11 +45,11 @@ class TestResults(BaseModel):
     failed: int = Field(0, description="Number of failed tests")
     skipped: int = Field(0, description="Number of skipped tests")
     duration: float = Field(0.0, description="Total duration in seconds")
-    test_files: list[TestFile] = Field(default_factory=list, description="Test files")
-    browsers: dict[str, int] = Field(
+    test_files: List[TestFile] = Field(default_factory=list, description="Test files")
+    browsers: Dict[str, int] = Field(
         default_factory=dict, description="Tests per browser"
     )
-    summary: dict[str, int] = Field(
+    summary: Dict[str, int] = Field(
         default_factory=dict, description="Summary information"
     )
     report_dir: str = Field("", description="Directory containing reports")

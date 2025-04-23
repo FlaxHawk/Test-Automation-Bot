@@ -1,6 +1,7 @@
 """Models for the crawler module."""
 
 from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional, Set
 
 
 class CrawlElement(BaseModel):
@@ -12,7 +13,7 @@ class CrawlElement(BaseModel):
     selector: str = Field(..., description="CSS or XPath selector for the element")
     element_type: str = Field(..., description="Type of element (button, link, etc.)")
     text: str | None = Field(None, description="Text content of the element")
-    attributes: dict[str, str] = Field(
+    attributes: Dict[str, str] = Field(
         default_factory=dict, description="Element attributes"
     )
     is_clickable: bool = Field(False, description="Whether the element is clickable")
@@ -31,11 +32,11 @@ class CrawlForm(BaseModel):
     form_selector: str = Field(..., description="CSS or XPath selector for the form")
     action: str | None = Field(None, description="Form action URL")
     method: str = Field("GET", description="Form HTTP method")
-    fields: list[CrawlElement] = Field(
+    fields: List[CrawlElement] = Field(
         default_factory=list, description="Form input fields"
     )
     submit_button: CrawlElement | None = Field(None, description="Form submit button")
-    sample_data: dict[str, str] = Field(
+    sample_data: Dict[str, str] = Field(
         default_factory=dict, description="Sample data for form fields"
     )
 
@@ -52,13 +53,13 @@ class CrawlPage(BaseModel):
     parent_url: str | None = Field(None, description="Parent page URL")
     status_code: int = Field(200, description="HTTP status code")
     content_type: str = Field("text/html", description="Content type")
-    elements: list[CrawlElement] = Field(
+    elements: List[CrawlElement] = Field(
         default_factory=list, description="Elements found on the page"
     )
-    forms: list[CrawlForm] = Field(
+    forms: List[CrawlForm] = Field(
         default_factory=list, description="Forms found on the page"
     )
-    links: list[str] = Field(
+    links: List[str] = Field(
         default_factory=list, description="Links found on the page"
     )
     screenshot_path: str | None = Field(
@@ -78,19 +79,19 @@ class CrawlData(BaseModel):
     """
 
     base_url: str = Field(..., description="Base URL of the crawled website")
-    pages: dict[str, CrawlPage] = Field(
+    pages: Dict[str, CrawlPage] = Field(
         default_factory=dict, description="Discovered pages by URL"
     )
     crawl_depth: int = Field(0, description="Maximum crawl depth reached")
     start_time: str = Field("", description="Crawl start time")
     end_time: str = Field("", description="Crawl end time")
-    visited_urls: set[str] = Field(
+    visited_urls: Set[str] = Field(
         default_factory=set, description="Set of visited URLs"
     )
-    failed_urls: dict[str, str] = Field(
+    failed_urls: Dict[str, str] = Field(
         default_factory=dict, description="Failed URLs with error messages"
     )
-    stats: dict[str, int] = Field(default_factory=dict, description="Crawl statistics")
+    stats: Dict[str, int] = Field(default_factory=dict, description="Crawl statistics")
 
     class Config:
         """Pydantic config."""
