@@ -117,9 +117,14 @@ jobs:
         poetry run playwright install --with-deps chromium
     - name: Run demo site test
       run: |
+        # Set debug environment variable
+        export PYTHONPATH=${PYTHONPATH}:${GITHUB_WORKSPACE}
+        export DEBUG=1
+        # Run the bot with detailed output
         poetry run bot run https://demo.playwright.dev/todomvc --depth 2 --headless
     - name: Upload demo results
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: demo-results
         path: reports/ 

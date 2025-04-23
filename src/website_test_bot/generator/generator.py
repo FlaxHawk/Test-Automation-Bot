@@ -154,17 +154,17 @@ def create_page_object(page: CrawlPage) -> PageObject:
         \"\"\"Initialize the page object.\"\"\"
         self.page = page"""
     page_object.methods["navigate"] = (
-        """async def navigate(self) -> None:
+        """def navigate(self) -> None:
         \"\"\"Navigate to the page.\"\"\"
-        await self.page.goto("{url}")
-        await self.page.wait_for_load_state("domcontentloaded")""".format(
+        self.page.goto("{url}")
+        self.page.wait_for_load_state("domcontentloaded")""".format(
             url=page.url
         )
     )
     # Add element getters
     for name, locator in page_object.elements.items():
         page_object.methods[f"get_{name}"] = (
-            """async def get_{name}(self) -> Locator:
+            """def get_{name}(self) -> Locator:
         \"\"\"Get the {name} element.\"\"\"
         return self.page.locator("{selector}")""".format(
                 name=name, selector=locator.selector
@@ -173,7 +173,7 @@ def create_page_object(page: CrawlPage) -> PageObject:
     # Add form methods
     for form_name, form_elements in page_object.forms.items():
         field_assignments = "\n        ".join(
-            f'await self.page.locator("{element.selector}").fill(data.get("{element.name}", ""))'
+            f'self.page.locator("{element.selector}").fill(data.get("{element.name}", ""))'
             for element in form_elements
             if element.element_type.startswith("input")
         )
@@ -181,12 +181,10 @@ def create_page_object(page: CrawlPage) -> PageObject:
             (e for e in form_elements if e.element_type == "submit"), None
         )
         if submit_element and field_assignments:
-            submit_action = (
-                f'await self.page.locator("{submit_element.selector}").click()'
-            )
+            submit_action = f'self.page.locator("{submit_element.selector}").click()'
             page_object.methods[
                 f"fill_{form_name}"
-            ] = f"""async def fill_{form_name}(self, data: dict) -> None:
+            ] = f"""def fill_{form_name}(self, data: dict) -> None:
         \"\"\"Fill the {form_name} form.\"\"\"
         {field_assignments}
         {submit_action}"""
@@ -248,10 +246,10 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
         str: Test case implementation
     """
     if case_type == "navigation":
-        return """async def test_{page_name}_navigation(page: Page) -> None:
+        return """def test_{page_name}_navigation(page: Page) -> None:
     \"\"\"Test navigation to {page_name}.\"\"\"
     page_object = {page_object_name}(page)
-    await page_object.navigate()
+    page_object.navigate()
     # Verify page title
     expect(page).to_have_title(re.compile(r"{title}"))""".format(
             page_name=sanitize_name(page_object.name),
@@ -268,13 +266,13 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
             element_assertions.append(
                 f"""
     # Verify {element_name} is visible
-    element = await page_object.get_{element_name}()
-    await expect(element).to_be_visible()"""
+    element = page_object.get_{element_name}()
+    expect(element).to_be_visible()"""
             )
-        return """async def test_{page_name}_elements(page: Page) -> None:
+        return """def test_{page_name}_elements(page: Page) -> None:
     \"\"\"Test elements on {page_name}.\"\"\"
     page_object = {page_object_name}(page)
-    await page_object.navigate()
+    page_object.navigate()
     {element_assertions}""".format(
             page_name=sanitize_name(page_object.name),
             page_object_name=page_object.name,
@@ -306,15 +304,15 @@ def create_test_case(page_object: PageObject, test_name: str, case_type: str) ->
             )
             + "\n    }"
         )
-        return """async def test_{page_name}_form_submission(page: Page) -> None:
+        return """def test_{page_name}_form_submission(page: Page) -> None:
     \"\"\"Test form submission on {page_name}.\"\"\"
     page_object = {page_object_name}(page)
-    await page_object.navigate()
+    page_object.navigate()
     # Fill and submit form
     form_data = {sample_data}
-    await page_object.fill_{form_name}(form_data)
+    page_object.fill_{form_name}(form_data)
     # Wait for navigation or response
-    await page.wait_for_load_state("networkidle")""".format(
+    page.wait_for_load_state("networkidle")""".format(
             page_name=sanitize_name(page_object.name),
             page_object_name=page_object.name,
             form_name=form_name,
@@ -401,7 +399,7 @@ from playwright.sync_api import Playwright, Browser, Page
 def browser_context_args() -> Dict:
     \"\"\"Fixture to set browser context args.\"\"\"
     return {{
-        "viewport": {{"width": 1280, "height": 720}}
+        "viewport": {{"width": 1280, "height": 720}},
         "record_video_dir": os.path.join("{output_dir}", "videos")
     }}
 @pytest.fixture(
@@ -411,9 +409,9 @@ def browser_context_args() -> Dict:
 def browser_type_launch_args(request) -> Dict:
     \"\"\"Fixture to set browser launch args.\"\"\"
     return {{
-        "headless": True
-        "slow_mo": 100
-        "timeout": 30000
+        "headless": True,
+        "slow_mo": 100,
+        "timeout": 30000,
         "args": ["--disable-gpu", "--no-sandbox"]
     }}
 @pytest.fixture(scope="session")
@@ -437,13 +435,13 @@ def pytest_runtest_makereport(item, call):
             screenshot_dir = os.path.join("{output_dir}", "screenshots")
             os.makedirs(screenshot_dir, exist_ok=True)
             screenshot_path = os.path.join(
-    screenshot_dir, f"{{item.nodeid.replace('/', '_')}}.png")
+                screenshot_dir, f"{{item.nodeid.replace('/', '_')}}.png")
             page.screenshot(path=screenshot_path, full_page=True)
             # Also save trace if available
             trace_dir = os.path.join("{output_dir}", "traces")
             os.makedirs(trace_dir, exist_ok=True)
             trace_path = os.path.join(
-    trace_dir, f"{{item.nodeid.replace('/', '_')}}.zip")
+                trace_dir, f"{{item.nodeid.replace('/', '_')}}.zip")
             page.context.tracing.stop(path=trace_path)
         except Exception as e:
             print(f"Failed to capture screenshot: {{e}}")

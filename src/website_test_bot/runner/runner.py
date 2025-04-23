@@ -95,8 +95,25 @@ def run_pytest(
     pytest_args, env_vars = setup_pytest_environment(test_dir, config)
     # Build command
     cmd = [sys.executable, "-m", "pytest"] + pytest_args + test_files
+
+    # Print command for debugging
+    print(f"Running command: {' '.join(cmd)}")
+    print(f"Working directory: {test_dir}")
+
     # Run command
     process = subprocess.run(cmd, capture_output=True, text=True, cwd=test_dir)
+
+    # Print output for debugging
+    print(f"Pytest return code: {process.returncode}")
+
+    if process.stdout:
+        print("Pytest stdout:")
+        print(process.stdout)
+
+    if process.stderr:
+        print("Pytest stderr:")
+        print(process.stderr)
+
     return process
 
 
