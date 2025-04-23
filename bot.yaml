@@ -1,0 +1,86 @@
+# Website Test Bot Configuration
+
+# Crawler settings
+crawler:
+  # Maximum depth to crawl (starting from the seed URL)
+  depth: 3
+  
+  # Maximum number of pages to crawl
+  max_pages: 100
+  
+  # Number of concurrent crawling tasks
+  concurrency: 2
+  
+  # Timeout for page load in milliseconds
+  page_timeout_ms: 30000
+  
+  # Wait time after page load in milliseconds
+  wait_after_load_ms: 1000
+  
+  # Patterns to exclude (regex)
+  exclude_patterns:
+    - "/logout"
+    - "/admin"
+    - "/account/delete"
+    - "\\?sort="
+    - "\\.pdf$"
+  
+  # User agent to use
+  user_agent: "Mozilla/5.0 Website-Test-Bot"
+  
+  # Whether to respect robots.txt
+  respect_robots_txt: true
+  
+  # Whether to capture screenshots during crawling
+  capture_screenshots: true
+
+# Test settings
+test:
+  # Browsers to test
+  browsers:
+    - chromium
+    - firefox
+    - webkit
+  
+  # Whether to run in headless mode
+  headless: true
+  
+  # Viewport settings
+  viewport:
+    width: 1280
+    height: 720
+  
+  # Whether to record video
+  video: true
+  
+  # Traces: "on", "off", or "on-failure"
+  traces: "on-failure"
+  
+  # Concurrency for test execution
+  concurrency: 4
+  
+  # Timeout for tests in milliseconds
+  test_timeout_ms: 60000
+  
+  # Retry failed tests
+  retry_failed: 1
+
+# Report settings
+report:
+  # Output directory for reports
+  output_dir: "./reports"
+  
+  # Report format: "html", "junit", or "both"
+  format: "both"
+  
+  # Whether to include screenshots in reports
+  include_screenshots: true
+  
+  # Whether to include videos in reports
+  include_videos: true
+  
+  # Whether to include traces in reports
+  include_traces: true
+  
+  # Whether to generate a summary report
+  generate_summary: true 
