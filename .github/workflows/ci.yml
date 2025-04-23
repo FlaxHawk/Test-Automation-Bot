@@ -22,6 +22,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry install
+    - name: Format code with black
+      run: |
+        # Format the code first
+        poetry run black src/website_test_bot/crawler/crawler.py
+        # Show the diff if any changes were made
+        git diff --name-only
     - name: Check formatting with black
       run: |
         poetry run black --check --exclude "src/website_test_bot/cli.py|src/website_test_bot/generator/generator.py" .
@@ -120,11 +126,27 @@ jobs:
         poetry run playwright install --with-deps chromium
     - name: Run demo site test
       run: |
-        # Set debug environment variable
-        export PYTHONPATH=${PYTHONPATH}:${GITHUB_WORKSPACE}
+        # Set debug environment variable and make sure PYTHONPATH is properly set
+        export PYTHONPATH=${GITHUB_WORKSPACE}:${PYTHONPATH}
         export DEBUG=1
+        
+        # Create a directory for the bot output that's predictable
+        mkdir -p ${GITHUB_WORKSPACE}/reports/demo
+        
         # Run the bot with detailed output
         poetry run bot run https://demo.playwright.dev/todomvc --depth 2 --headless
+        
+        # Look for and display test output files
+        echo "Test output files:"
+        find ${GITHUB_WORKSPACE}/reports -type f -name "test_*.py" | sort
+        
+        # Print pythonpath for debugging
+        echo "PYTHONPATH: $PYTHONPATH"
+        echo "Current directory: $(pwd)"
+        
+        # List generated directories
+        echo "Generated directories:"
+        find ${GITHUB_WORKSPACE}/reports -type d | sort
     - name: Upload demo results
       uses: actions/upload-artifact@v4
       if: always()
