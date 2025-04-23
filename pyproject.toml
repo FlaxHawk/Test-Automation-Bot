@@ -32,12 +32,6 @@ bot = "website_test_bot.cli:app"
 line-length = 88
 target-version = ["py311"]
 
-[tool.ruff]
-line-length = 88
-target-version = "py311"
-select = ["E", "F", "B", "I", "N", "UP", "ANN", "C4", "SIM", "ARG"]
-ignore = ["ANN101", "ANN102"]
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api" 
