@@ -1,6 +1,7 @@
 """Command-line interface for the Website Test Bot."""
 
 import os
+from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -47,23 +48,23 @@ def main(
 @app.command("run")
 def run(
     url: str = typer.Argument(..., help="URL of the website to test."),
-    config_path: str | None = typer.Option(
+    config_path: Optional[str] = typer.Option(
         None, "--config", "-c", help="Path to configuration file."
     ),
-    depth: int | None = typer.Option(
+    depth: Optional[int] = typer.Option(
         None, "--depth", "-d", help="Maximum depth to crawl."
     ),
     headful: bool = typer.Option(False, "--headful", "-H", help="Run in headful mode."),
-    browsers: str | None = typer.Option(
+    browsers: Optional[str] = typer.Option(
         None,
         "--browsers",
         "-b",
         help="Comma-separated list of browsers to test (chromium,firefox,webkit).",
     ),
-    concurrency: int | None = typer.Option(
+    concurrency: Optional[int] = typer.Option(
         None, "--concurrency", "-C", help="Number of concurrent tasks."
     ),
-    output_dir: str | None = typer.Option(
+    output_dir: Optional[str] = typer.Option(
         None, "--output-dir", "-o", help="Output directory for reports."
     ),
 ) -> None:

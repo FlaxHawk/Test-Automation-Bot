@@ -1,6 +1,6 @@
 """Configuration module for the Website Test Bot."""
 
-from typing import List, Dict, Literal, Any
+from typing import List, Dict, Literal, Any, Optional
 import os
 from pydantic import BaseModel, Field, field_validator, model_validator
 import yaml
@@ -110,7 +110,7 @@ class Config(BaseModel):
         return self
 
 
-def load_config(config_path: str | None = None) -> Config:
+def load_config(config_path: Optional[str] = None) -> Config:
     """
     Load configuration from file.
     Args:
