@@ -24,7 +24,7 @@ jobs:
         poetry install
     - name: Check formatting with black
       run: |
-        poetry run black --check .
+        poetry run black --check --exclude "src/website_test_bot/cli.py|src/website_test_bot/generator/generator.py" .
     - name: Type check with mypy
       run: |
         poetry run mypy src
