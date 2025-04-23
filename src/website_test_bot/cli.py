@@ -16,8 +16,8 @@ from website_test_bot.runner import run_tests
 
 # Create Typer app
 app = typer.Typer(
-    name="Website Test Bot"
-    help="Automated website testing bot using Playwright and Pytest."
+    name="Website Test Bot",
+    help="Automated website testing bot using Playwright and Pytest.",
     add_completion=False
 )
 # Create Rich console
@@ -37,25 +37,25 @@ def main(
     pass
 @app.command("run")
 def run(
-    url: str = typer.Argument(..., help="URL of the website to test.")
+    url: str = typer.Argument(..., help="URL of the website to test."),
     config_path: str | None = typer.Option(
         None, "--config", "-c", help="Path to configuration file."
-    )
+    ),
     depth: int | None = typer.Option(
         None, "--depth", "-d", help="Maximum depth to crawl."
-    )
+    ),
     headful: bool = typer.Option(
         False, "--headful", "-H", help="Run in headful mode."
-    )
+    ),
     browsers: str | None = typer.Option(
-        None
-        "--browsers"
-        "-b"
+        None,
+        "--browsers",
+        "-b",
         help="Comma-separated list of browsers to test (chromium,firefox,webkit)."
-    )
+    ),
     concurrency: int | None = typer.Option(
         None, "--concurrency", "-C", help="Number of concurrent tasks."
-    )
+    ),
     output_dir: str | None = typer.Option(
         None, "--output-dir", "-o", help="Output directory for reports."
     )
@@ -70,7 +70,7 @@ def run(
     # Welcome message
     console.print(
         Panel.fit(
-            "🤖 [bold green]Website Test Bot[/bold green] 🤖"
+            "🤖 [bold green]Website Test Bot[/bold green] 🤖",
             subtitle=f"v{__version__}"
         )
     )
@@ -80,10 +80,10 @@ def run(
     config = load_config(config_path)
     # Merge CLI args
     cli_args = {
-        "depth": depth
-        "headful": headful
-        "browsers": browsers
-        "concurrency": concurrency
+        "depth": depth,
+        "headful": headful,
+        "browsers": browsers,
+        "concurrency": concurrency,
         "output_dir": output_dir
     }
     config = merge_cli_args(config, cli_args)
@@ -99,8 +99,8 @@ def run(
     # Step 1: Crawl website
     console.print("\n[bold]Step 1: Crawling website...[/bold]")
     with Progress(
-        SpinnerColumn()
-        TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
         console=console
     ) as progress:
         task = progress.add_task("Crawling...", total=None)
@@ -110,8 +110,8 @@ def run(
     # Step 2: Generate tests
     console.print("\n[bold]Step 2: Generating tests...[/bold]")
     with Progress(
-        SpinnerColumn()
-        TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
         console=console
     ) as progress:
         task = progress.add_task("Generating...", total=None)
@@ -121,8 +121,8 @@ def run(
     # Step 3: Run tests
     console.print("\n[bold]Step 3: Running tests...[/bold]")
     with Progress(
-        SpinnerColumn()
-        TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
         console=console
     ) as progress:
         task = progress.add_task("Running...", total=None)
@@ -136,8 +136,8 @@ def run(
     # Step 4: Generate report
     console.print("\n[bold]Step 4: Generating report...[/bold]")
     with Progress(
-        SpinnerColumn()
-        TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
         console=console
     ) as progress:
         task = progress.add_task("Generating...", total=None)
@@ -156,5 +156,7 @@ def run(
         raise typer.Exit(code=1)
     else:
         console.print("\n[bold green]All tests passed![/bold green]")
+
+
 if __name__ == "__main__":
     app() 
