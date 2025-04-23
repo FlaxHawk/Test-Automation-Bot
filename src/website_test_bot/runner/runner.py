@@ -1,4 +1,5 @@
 """Test runner module for executing generated tests."""
+
 import os
 from .models import TestCase, TestFile, TestResults
 import subprocess
@@ -6,6 +7,8 @@ import sys
 import xml.etree.ElementTree as ET
 from website_test_bot.config import Config
 from website_test_bot.generator.models import GeneratedFile
+
+
 def get_test_files(test_dir: str) -> list[str]:
     """
     Get all test files in a directory.
@@ -21,8 +24,11 @@ def get_test_files(test_dir: str) -> list[str]:
             if file_name.startswith("test_") and file_name.endswith(".py"):
                 test_files.append(os.path.join(tests_path, file_name))
     return test_files
+
+
 def setup_pytest_environment(
-    test_dir: str, config: Config) -> tuple[list[str], dict[str, str]]:
+    test_dir: str, config: Config
+) -> tuple[list[str], dict[str, str]]:
     """
     Set up the Pytest environment.
     Args:
@@ -37,20 +43,17 @@ def setup_pytest_environment(
     # Determine report format
     report_args = []
     if config.report.format in ["html", "both"]:
-        report_args.extend([
-            "--html", os.path.join(report_dir, "report.html"),
-            "--self-contained-html"
-        ])
+        report_args.extend(
+            ["--html", os.path.join(report_dir, "report.html"), "--self-contained-html"]
+        )
     if config.report.format in ["junit", "both"]:
-        report_args.extend([
-            "--junitxml", os.path.join(report_dir, "report.xml")
-        ])
+        report_args.extend(["--junitxml", os.path.join(report_dir, "report.xml")])
     # Configure Pytest arguments
     pytest_args = [
         "-v",
         f"--numprocesses={config.test.concurrency}",
         f"--maxfail={config.test.concurrency * 2}",
-        f"--reruns={config.test.retry_failed}"
+        f"--reruns={config.test.retry_failed}",
     ]
     # Add report arguments
     pytest_args.extend(report_args)
@@ -66,6 +69,8 @@ def setup_pytest_environment(
     if config.test.video:
         env_vars["PWVIDEO"] = "1"
     return pytest_args, env_vars
+
+
 def run_pytest(
     test_files: list[str], test_dir: str, config: Config
 ) -> subprocess.CompletedProcess:
@@ -82,11 +87,10 @@ def run_pytest(
     # Build command
     cmd = [sys.executable, "-m", "pytest"] + pytest_args + test_files
     # Run command
-    process = subprocess.run(cmd, capture_output=True,
-        text=True,
-        cwd=test_dir
-    )
+    process = subprocess.run(cmd, capture_output=True, text=True, cwd=test_dir)
     return process
+
+
 def parse_junit_report(report_path: str) -> list[TestCase]:
     """
     Parse a JUnit XML report.
@@ -129,7 +133,7 @@ def parse_junit_report(report_path: str) -> list[TestCase]:
                 status=status,
                 message=message,
                 duration=duration,
-                browser=browser
+                browser=browser,
             )
             # Add to list
             test_cases.append(test_case)
@@ -137,6 +141,8 @@ def parse_junit_report(report_path: str) -> list[TestCase]:
         # Handle parsing errors
         print(f"Error parsing JUnit report: {e}")
     return test_cases
+
+
 def collect_artifacts(test_dir: str, test_cases: list[TestCase]) -> None:
     """
     Collect artifacts for test cases.
@@ -179,10 +185,10 @@ def collect_artifacts(test_dir: str, test_cases: list[TestCase]) -> None:
                 for test_case in test_cases:
                     if test_case.browser == browser:
                         test_case.video_path = video_path
+
+
 def create_test_results(
-    test_cases: list[TestCase],
-    test_dir: str,
-    process: subprocess.CompletedProcess
+    test_cases: list[TestCase], test_dir: str, process: subprocess.CompletedProcess
 ) -> TestResults:
     """
     Create test results from test cases.
@@ -199,7 +205,7 @@ def create_test_results(
         failed=sum(1 for tc in test_cases if tc.status == "failed"),
         skipped=sum(1 for tc in test_cases if tc.status == "skipped"),
         duration=sum(tc.duration for tc in test_cases),
-        report_dir=os.path.join(test_dir, "reports")
+        report_dir=os.path.join(test_dir, "reports"),
     )
     # Set report paths
     html_report = os.path.join(results.report_dir, "report.html")
@@ -221,7 +227,7 @@ def create_test_results(
         test_file = TestFile(
             file_path=file_path,
             test_cases=file_test_cases,
-            duration=sum(tc.duration for tc in file_test_cases)
+            duration=sum(tc.duration for tc in file_test_cases),
         )
         results.test_files.append(test_file)
     # Calculate browser statistics
@@ -236,9 +242,11 @@ def create_test_results(
         "failed": results.failed,
         "skipped": results.skipped,
         "duration": results.duration,
-        "browsers": len(results.browsers)
+        "browsers": len(results.browsers),
     }
     return results
+
+
 def run_tests(generated_files: list[GeneratedFile], config: Config) -> TestResults:
     """
     Run tests from generated files.
@@ -268,11 +276,11 @@ def run_tests(generated_files: list[GeneratedFile], config: Config) -> TestResul
                     status="failed" if process.returncode != 0 else "passed",
                     message=process.stderr if process.returncode != 0 else None,
                     duration=0.0,
-                    browser="chromium"
+                    browser="chromium",
                 )
             )
     # Collect artifacts
     collect_artifacts(test_dir, test_cases)
     # Create test results
     results = create_test_results(test_cases, test_dir, process)
-    return results 
+    return results

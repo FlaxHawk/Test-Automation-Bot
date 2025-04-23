@@ -1,4 +1,5 @@
 """Crawler module for discovering website pages and elements."""
+
 from typing import tuple, list
 import os
 import re
@@ -10,8 +11,11 @@ import datetime
 import time
 import urllib.parse
 from website_test_bot.config import Config
+
 # Create console
 console = Console()
+
+
 async def create_browser(config: Config, headless: bool = True) -> Browser:
     """
     Create a Playwright browser instance.
@@ -24,6 +28,8 @@ async def create_browser(config: Config, headless: bool = True) -> Browser:
     playwright = await async_playwright().start()
     browser = await playwright.chromium.launch(headless=headless)
     return browser
+
+
 async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
     """
     Extract forms from a page.
@@ -43,15 +49,11 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
         method = await form_element.get_attribute("method") or "GET"
         # Create form object
         form = CrawlForm(
-            form_selector=form_selector,
-            action=action,
-            method=method.upper()
+            form_selector=form_selector, action=action, method=method.upper()
         )
         # Find form fields
         input_elements = await form_element.query_selector_all(
-            'input:not([type="submit"]):not([type="button"]):not([type="reset"]),
-                       select,
-                       textarea'
+            'input:not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea'
         )
         for input_element in input_elements:
             # Get field attributes
@@ -76,9 +78,9 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
                     "type": input_type,
                     "name": input_name or "",
                     "id": input_id or "",
-                    "placeholder": input_placeholder or ""
+                    "placeholder": input_placeholder or "",
                 },
-                is_visible=await input_element.is_visible()
+                is_visible=await input_element.is_visible(),
             )
             # Add field to form
             form.fields.append(field_element)
@@ -105,17 +107,21 @@ async def extract_forms(page: Page, output_dir: str) -> list[CrawlForm]:
             if submit_id:
                 submit_selector += f"#{submit_id}"
             else:
-                submit_selector += "input[type='submit'], button[type='submit'], button:not([type])"
+                submit_selector += (
+                    "input[type='submit'], button[type='submit'], button:not([type])"
+                )
             # Create submit button element
             form.submit_button = CrawlElement(
                 selector=submit_selector,
                 element_type="submit",
                 text=submit_text.strip(),
                 is_clickable=True,
-                is_visible=await submit_element.is_visible()
+                is_visible=await submit_element.is_visible(),
             )
         forms.append(form)
     return forms
+
+
 async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
     """
     Extract interactive elements from a page.
@@ -128,18 +134,20 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
     elements: list[CrawlElement] = []
     # Find all interactive elements
     selectors = [
-        "a[href]"
-        "button"
-        "input[type='button']"
-        "input[type='submit']"
-        "[role='button']"
+        "a[href]",
+        "button",
+        "input[type='button']",
+        "input[type='submit']",
+        "[role='button']",
     ]
     for selector in selectors:
         element_handles = await page.query_selector_all(selector)
         for element_handle in element_handles:
             try:
                 # Get element attributes
-                element_type = await element_handle.get_attribute("type") or selector.split("[")[0]
+                element_type = (
+                    await element_handle.get_attribute("type") or selector.split("[")[0]
+                )
                 element_text = await element_handle.text_content() or ""
                 element_href = await element_handle.get_attribute("href") or ""
                 element_id = await element_handle.get_attribute("id") or ""
@@ -148,7 +156,7 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
                 attributes = {
                     "id": element_id,
                     "class": element_class,
-                    "href": element_href
+                    "href": element_href,
                 }
                 # Create element selector
                 custom_selector = ""
@@ -170,13 +178,15 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
                     text=element_text.strip(),
                     attributes=attributes,
                     is_clickable=is_clickable,
-                    is_visible=is_visible
+                    is_visible=is_visible,
                 )
                 elements.append(element)
             except Exception as e:
                 # Ignore elements that can't be processed
                 pass
     return elements
+
+
 async def extract_links(page: Page, base_url: str) -> list[str]:
     """
     Extract links from a page.
@@ -200,25 +210,29 @@ async def extract_links(page: Page, base_url: str) -> list[str]:
                     # Remove fragment
                     url_parts = urllib.parse.urlparse(absolute_url)
                     clean_url = urllib.parse.urlunparse(
-                        (url_parts.scheme,
-                         url_parts.netloc,
-                         url_parts.path,
-                         url_parts.params,
-                         url_parts.query,
-                         "")
+                        (
+                            url_parts.scheme,
+                            url_parts.netloc,
+                            url_parts.path,
+                            url_parts.params,
+                            url_parts.query,
+                            "",
+                        )
                     )
                     links.append(clean_url)
         except Exception:
             # Ignore links that can't be processed
             pass
     return links
+
+
 async def crawl_page(
     browser: Browser,
     url: str,
     output_dir: str,
     depth: int,
     parent_url: str | None,
-    config: Config
+    config: Config,
 ) -> CrawlPage:
     """
     Crawl a single page.
@@ -234,16 +248,15 @@ async def crawl_page(
     """
     # Create page
     context = await browser.new_context(
-        viewport={"width": config.test.viewport.width, "height": config.test.viewport.height},
-        user_agent=config.crawler.user_agent
+        viewport={
+            "width": config.test.viewport.width,
+            "height": config.test.viewport.height,
+        },
+        user_agent=config.crawler.user_agent,
     )
     page = await context.new_page()
     # Create crawl page
-    crawl_page = CrawlPage(
-        url=url,
-        depth=depth,
-        parent_url=parent_url
-    )
+    crawl_page = CrawlPage(url=url, depth=depth, parent_url=parent_url)
     try:
         # Create page-specific output directory
         url_hash = str(abs(hash(url)) % 10000)
@@ -251,9 +264,7 @@ async def crawl_page(
         os.makedirs(page_dir, exist_ok=True)
         # Navigate to page
         response = await page.goto(
-            url,
-            timeout=config.crawler.page_timeout_ms,
-            wait_until="domcontentloaded"
+            url, timeout=config.crawler.page_timeout_ms, wait_until="domcontentloaded"
         )
         # Wait for page to load
         await asyncio.sleep(config.crawler.wait_after_load_ms / 1000)
@@ -288,6 +299,8 @@ async def crawl_page(
         # Close context
         await context.close()
     return crawl_page
+
+
 async def is_url_allowed(url: str, config: Config) -> bool:
     """
     Check if a URL is allowed to be crawled.
@@ -307,10 +320,21 @@ async def is_url_allowed(url: str, config: Config) -> bool:
         return False
     # Check file extensions
     path = url_parts.path.lower()
-    excluded_extensions = [".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".css", ".js"]
+    excluded_extensions = [
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".svg",
+        ".css",
+        ".js",
+    ]
     if any(path.endswith(ext) for ext in excluded_extensions):
         return False
     return True
+
+
 async def crawl_website(url: str, config: Config) -> CrawlData:
     """
     Crawl a website and discover pages.
@@ -325,10 +349,7 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
     crawl_dir = os.path.join(config.report.output_dir, "crawl", timestamp)
     os.makedirs(crawl_dir, exist_ok=True)
     # Initialize crawl data
-    crawl_data = CrawlData(
-        base_url=url,
-        start_time=timestamp
-    )
+    crawl_data = CrawlData(base_url=url, start_time=timestamp)
     # Create browser
     browser = await create_browser(config, headless=config.test.headless)
     try:
@@ -336,8 +357,8 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
         to_crawl: list[tuple[str, int, str | None]] = [(url, 0, None)]
         while to_crawl and len(crawl_data.pages) < config.crawler.max_pages:
             # Get batch of URLs to crawl concurrently
-            batch = to_crawl[:config.crawler.concurrency]
-            to_crawl = to_crawl[config.crawler.concurrency:]
+            batch = to_crawl[: config.crawler.concurrency]
+            to_crawl = to_crawl[config.crawler.concurrency :]
             # Crawl batch
             crawl_tasks = [
                 crawl_page(browser, url, crawl_dir, depth, parent_url, config)
@@ -362,7 +383,9 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
                             to_crawl.append((link, page.depth + 1, page.url))
                 # Add failed page to failed URLs
                 if page.has_errors:
-                    crawl_data.failed_urls[page.url] = page.error_message or "Unknown error"
+                    crawl_data.failed_urls[page.url] = (
+                        page.error_message or "Unknown error"
+                    )
         # Calculate statistics
         crawl_data.stats = {
             "pages": len(crawl_data.pages),
@@ -370,7 +393,7 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
             "depth": crawl_data.crawl_depth,
             "links": sum(len(p.links) for p in crawl_data.pages.values()),
             "forms": sum(len(p.forms) for p in crawl_data.pages.values()),
-            "elements": sum(len(p.elements) for p in crawl_data.pages.values())
+            "elements": sum(len(p.elements) for p in crawl_data.pages.values()),
         }
     finally:
         # Close browser
@@ -378,6 +401,8 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
         # Set end time
         crawl_data.end_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     return crawl_data
+
+
 def crawl_website_sync(url: str, config: Config) -> CrawlData:
     """
     Synchronous wrapper for crawl_website.
@@ -387,4 +412,4 @@ def crawl_website_sync(url: str, config: Config) -> CrawlData:
     Returns:
         CrawlData: Crawled website data
     """
-    return asyncio.run(crawl_website(url, config)) 
+    return asyncio.run(crawl_website(url, config))

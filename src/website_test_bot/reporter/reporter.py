@@ -1,4 +1,5 @@
 """Report generator module for creating test reports."""
+
 from pathlib import Path
 from typing import list, dict
 import os
@@ -8,6 +9,8 @@ import shutil
 import zipfile
 from website_test_bot.config import Config
 from website_test_bot.runner.models import TestResults, TestCase, TestFile
+
+
 def generate_summary_json(test_results: TestResults, output_path: str) -> str:
     """
     Generate a summary JSON file.
@@ -28,15 +31,17 @@ def generate_summary_json(test_results: TestResults, output_path: str) -> str:
                 "passed": sum(1 for tc in file.test_cases if tc.status == "passed"),
                 "failed": sum(1 for tc in file.test_cases if tc.status == "failed"),
                 "skipped": sum(1 for tc in file.test_cases if tc.status == "skipped"),
-                "duration": file.duration
+                "duration": file.duration,
             }
             for file in test_results.test_files
-        ]
+        ],
     }
     # Write to file
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     return output_path
+
+
 def copy_report_files(test_results: TestResults, output_dir: str) -> dict[str, str]:
     """
     Copy report files to the output directory.
@@ -58,6 +63,8 @@ def copy_report_files(test_results: TestResults, output_dir: str) -> dict[str, s
         shutil.copy2(test_results.junit_report, junit_dest)
         report_files["junit"] = junit_dest
     return report_files
+
+
 def collect_screenshots(test_results: TestResults, output_dir: str) -> list[str]:
     """
     Collect screenshots for failed tests.
@@ -81,6 +88,8 @@ def collect_screenshots(test_results: TestResults, output_dir: str) -> list[str]
                 shutil.copy2(test_case.screenshot_path, dest_path)
                 screenshot_paths.append(dest_path)
     return screenshot_paths
+
+
 def collect_videos(test_results: TestResults, output_dir: str) -> list[str]:
     """
     Collect videos for tests.
@@ -106,6 +115,8 @@ def collect_videos(test_results: TestResults, output_dir: str) -> list[str]:
                 video_paths.append(dest_path)
                 processed_videos.add(test_case.video_path)
     return video_paths
+
+
 def collect_traces(test_results: TestResults, output_dir: str) -> list[str]:
     """
     Collect traces for failed tests.
@@ -129,6 +140,8 @@ def collect_traces(test_results: TestResults, output_dir: str) -> list[str]:
                 shutil.copy2(test_case.trace_path, dest_path)
                 trace_paths.append(dest_path)
     return trace_paths
+
+
 def create_archive(base_dir: str, output_path: str) -> str:
     """
     Create a ZIP archive of the report directory.
@@ -149,11 +162,13 @@ def create_archive(base_dir: str, output_path: str) -> str:
                 # Add to archive
                 zipf.write(file_path, rel_path)
     return output_path
+
+
 def generate_html_index(
     test_results: TestResults,
     report_files: dict[str, str],
     artifacts: dict[str, list[str]],
-    output_path: str
+    output_path: str,
 ) -> str:
     """
     Generate an HTML index file.
@@ -169,7 +184,7 @@ def generate_html_index(
     num_screenshots = len(artifacts.get("screenshots", []))
     num_videos = len(artifacts.get("videos", []))
     num_traces = len(artifacts.get("traces", []))
-    
+
     # Create HTML - using raw string to avoid syntax issues
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -273,6 +288,8 @@ def generate_html_index(
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
     return output_path
+
+
 def generate_report(test_results: TestResults, config: Config) -> str:
     """
     Generate a report from test results.
@@ -290,7 +307,8 @@ def generate_report(test_results: TestResults, config: Config) -> str:
         os.makedirs(os.path.join(output_dir, artifact_dir), exist_ok=True)
     # Generate summary JSON
     summary_path = generate_summary_json(
-        test_results, os.path.join(output_dir, "summary.json"))
+        test_results, os.path.join(output_dir, "summary.json")
+    )
     # Copy report files
     report_files = copy_report_files(test_results, output_dir)
     # Collect artifacts
@@ -300,13 +318,10 @@ def generate_report(test_results: TestResults, config: Config) -> str:
     artifacts["traces"] = collect_traces(test_results, output_dir)
     # Generate HTML index
     index_path = generate_html_index(
-        test_results,
-        report_files,
-        artifacts,
-        os.path.join(output_dir, "index.html")
+        test_results, report_files, artifacts, os.path.join(output_dir, "index.html")
     )
     # Create archive
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     archive_path = os.path.join(config.report.output_dir, f"report_{timestamp}.zip")
     create_archive(output_dir, archive_path)
-    return index_path 
+    return index_path

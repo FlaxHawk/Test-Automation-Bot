@@ -1,10 +1,18 @@
 """Test generator module for creating test files from crawl data."""
+
 import os
 import re
 from .models import GeneratedFile, PageObject, ElementLocator, GeneratedTest
 import string
 from website_test_bot.config import Config
-from website_test_bot.crawler.models import CrawlData, CrawlPage, CrawlForm, CrawlElement
+from website_test_bot.crawler.models import (
+    CrawlData,
+    CrawlPage,
+    CrawlForm,
+    CrawlElement,
+)
+
+
 def sanitize_name(name: str) -> str:
     """
     Sanitize a name for use in Python code.
@@ -25,6 +33,8 @@ def sanitize_name(name: str) -> str:
     # Remove trailing underscores
     name = name.strip("_")
     return name
+
+
 def create_page_object_name(page: CrawlPage) -> str:
     """
     Create a name for a page object.
@@ -53,6 +63,8 @@ def create_page_object_name(page: CrawlPage) -> str:
     if not camel_case.endswith("Page"):
         camel_case += "Page"
     return camel_case
+
+
 def create_element_name(element: CrawlElement) -> str:
     """
     Create a name for an element.
@@ -79,6 +91,8 @@ def create_element_name(element: CrawlElement) -> str:
     if element.element_type not in sanitized:
         sanitized = f"{element.element_type}_{sanitized}"
     return sanitized
+
+
 def create_element_locator(element: CrawlElement) -> ElementLocator:
     """
     Create an element locator from a crawled element.
@@ -92,8 +106,10 @@ def create_element_locator(element: CrawlElement) -> ElementLocator:
         selector=element.selector,
         selector_type="css",
         description=element.text or "",
-        element_type=element.element_type
+        element_type=element.element_type,
     )
+
+
 def create_page_object(page: CrawlPage) -> PageObject:
     """
     Create a page object from a crawled page.
@@ -107,10 +123,7 @@ def create_page_object(page: CrawlPage) -> PageObject:
     file_name = sanitize_name(name).lower() + ".py"
     # Create page object
     page_object = PageObject(
-        name=name,
-        file_name=file_name,
-        url=page.url,
-        title=page.title
+        name=name, file_name=file_name, url=page.url, title=page.title
     )
     # Add required imports
     page_object.imports.add("from playwright.sync_api import Page, Locator, expect")
@@ -136,43 +149,54 @@ def create_page_object(page: CrawlPage) -> PageObject:
         if form_elements:
             page_object.forms[form_name] = form_elements
     # Add methods
-    page_object.methods["__init__"] = """def __init__(self, page: Page) -> None:
+    page_object.methods[
+        "__init__"
+    ] = """def __init__(self, page: Page) -> None:
         \"\"\"Initialize the page object.\"\"\"
         self.page = page"""
-    page_object.methods["navigate"] = """async def navigate(self) -> None:
+    page_object.methods["navigate"] = (
+        """async def navigate(self) -> None:
         \"\"\"Navigate to the page.\"\"\"
         await self.page.goto("{url}")
-        await self.page.wait_for_load_state("domcontentloaded")""".format(url=page.url)
+        await self.page.wait_for_load_state("domcontentloaded")""".format(
+            url=page.url
+        )
+    )
     # Add element getters
     for name, locator in page_object.elements.items():
-        page_object.methods[f"get_{name}"] = """async def get_{name}(self) -> Locator:
+        page_object.methods[f"get_{name}"] = (
+            """async def get_{name}(self) -> Locator:
         \"\"\"Get the {name} element.\"\"\"
         return self.page.locator("{selector}")""".format(
-            name=name,
-            selector=locator.selector
+                name=name, selector=locator.selector
+            )
         )
     # Add form methods
     for form_name, form_elements in page_object.forms.items():
         field_assignments = "\n        ".join(
-            f'await self.page.locator("{element.selector}").fill(data.get("{element.name}",
-                                      ""))'
+            f'await self.page.locator("{element.selector}").fill(data.get("{element.name}", ""))'
             for element in form_elements
             if element.element_type.startswith("input")
         )
         submit_element = next(
-            (e for e in form_elements if e.element_type == "submit"),
-            None
+            (e for e in form_elements if e.element_type == "submit"), None
         )
         if submit_element and field_assignments:
-            submit_action = f'await self.page.locator("{submit_element.selector}").click()'
-            page_object.methods[f"fill_{form_name}"] = f"""async def fill_{form_name}(self,
-                                                                                      data: dict) -> None:
+            submit_action = (
+                f'await self.page.locator("{submit_element.selector}").click()'
+            )
+            page_object.methods[
+                f"fill_{form_name}"
+            ] = f"""async def fill_{form_name}(self, data: dict) -> None:
         \"\"\"Fill the {form_name} form.\"\"\"
         {field_assignments}
         {submit_action}"""
     return page_object
+
+
 def generate_page_object_file(
-    page_object: PageObject, output_dir: str) -> GeneratedFile:
+    page_object: PageObject, output_dir: str
+) -> GeneratedFile:
     """
     Generate a page object file.
     Args:
@@ -191,15 +215,13 @@ class {name}:
         name=page_object.name,
         url=page_object.url,
         imports="\n".join(sorted(page_object.imports)),
-        methods="\n\n    ".join(page_object.methods.values())
+        methods="\n\n    ".join(page_object.methods.values()),
     )
     # Create file path
     file_path = os.path.join(output_dir, "page_objects", page_object.file_name)
-    return GeneratedFile(
-        file_path=file_path,
-        content=content,
-        file_type="page_object"
-    )
+    return GeneratedFile(file_path=file_path, content=content, file_type="page_object")
+
+
 def create_test_name(page_object: PageObject) -> str:
     """
     Create a test name from a page object.
@@ -214,11 +236,9 @@ def create_test_name(page_object: PageObject) -> str:
         name = name[:-4]
     # Add "Test" suffix
     return f"Test{name}"
-def create_test_case(
-    page_object: PageObject,
-    test_name: str,
-    case_type: str
-) -> str:
+
+
+def create_test_case(page_object: PageObject, test_name: str, case_type: str) -> str:
     """
     Create a test case.
     Args:
@@ -237,17 +257,21 @@ def create_test_case(
     expect(page).to_have_title(re.compile(r"{title}"))""".format(
             page_name=sanitize_name(page_object.name),
             page_object_name=page_object.name,
-            title=re.escape(page_object.title) if page_object.title else ".*"
+            title=re.escape(page_object.title) if page_object.title else ".*",
         )
     elif case_type == "elements":
         if not page_object.elements:
             return ""
         element_assertions = []
-        for element_name, element in list(page_object.elements.items())[:5]:  # Limit to 5 elements
-            element_assertions.append(f"""
+        for element_name, element in list(page_object.elements.items())[
+            :5
+        ]:  # Limit to 5 elements
+            element_assertions.append(
+                f"""
     # Verify {element_name} is visible
     element = await page_object.get_{element_name}()
-    await expect(element).to_be_visible()""")
+    await expect(element).to_be_visible()"""
+            )
         return """async def test_{page_name}_elements(page: Page) -> None:
     \"\"\"Test elements on {page_name}.\"\"\"
     page_object = {page_object_name}(page)
@@ -255,7 +279,7 @@ def create_test_case(
     {element_assertions}""".format(
             page_name=sanitize_name(page_object.name),
             page_object_name=page_object.name,
-            element_assertions="\n".join(element_assertions)
+            element_assertions="\n".join(element_assertions),
         )
     elif case_type == "form":
         if not page_object.forms:
@@ -276,9 +300,13 @@ def create_test_case(
                     sample_data[element.name] = f"test_{element.name}"
         if not sample_data:
             return ""
-        sample_data_str = "{\n        " + ",\n        ".join(
-            f'"{name}": "{value}"' for name, value in sample_data.items()
-        ) + "\n    }"
+        sample_data_str = (
+            "{\n        "
+            + ",\n        ".join(
+                f'"{name}": "{value}"' for name, value in sample_data.items()
+            )
+            + "\n    }"
+        )
         return """async def test_{page_name}_form_submission(page: Page) -> None:
     \"\"\"Test form submission on {page_name}.\"\"\"
     page_object = {page_object_name}(page)
@@ -291,9 +319,11 @@ def create_test_case(
             page_name=sanitize_name(page_object.name),
             page_object_name=page_object.name,
             form_name=form_name,
-            sample_data=sample_data_str
+            sample_data=sample_data_str,
         )
     return ""
+
+
 def create_test_from_page_object(page_object: PageObject) -> GeneratedTest:
     """
     Create a test from a page object.
@@ -307,17 +337,16 @@ def create_test_from_page_object(page_object: PageObject) -> GeneratedTest:
     file_name = f"test_{sanitize_name(page_object.name).lower()}.py"
     # Create test
     test = GeneratedTest(
-        name=test_name,
-        file_name=file_name,
-        page_objects=[page_object.name]
+        name=test_name, file_name=file_name, page_objects=[page_object.name]
     )
     # Add required imports
     test.imports.add("import re")
     test.imports.add("import pytest")
     test.imports.add("from playwright.sync_api import Page, expect")
     test.imports.add(
-    f"from page_objects.{os.path.splitext(page_object.file_name)[0]} import" +
-    f" {page_object.name}")
+        f"from page_objects.{os.path.splitext(page_object.file_name)[0]} import"
+        + f" {page_object.name}"
+    )
     # Add test cases
     navigation_test = create_test_case(page_object, test_name, "navigation")
     if navigation_test:
@@ -329,6 +358,8 @@ def create_test_from_page_object(page_object: PageObject) -> GeneratedTest:
     if form_test:
         test.test_cases["form"] = form_test
     return test
+
+
 def generate_test_file(test: GeneratedTest, output_dir: str) -> GeneratedFile:
     """
     Generate a test file.
@@ -345,15 +376,13 @@ def generate_test_file(test: GeneratedTest, output_dir: str) -> GeneratedFile:
 """.format(
         name=test.name,
         imports="\n".join(sorted(test.imports)),
-        test_cases="\n\n\n".join(test.test_cases.values())
+        test_cases="\n\n\n".join(test.test_cases.values()),
     )
     # Create file path
     file_path = os.path.join(output_dir, "tests", test.file_name)
-    return GeneratedFile(
-        file_path=file_path,
-        content=content,
-        file_type="test"
-    )
+    return GeneratedFile(file_path=file_path, content=content, file_type="test")
+
+
 def generate_conftest(browsers: list[str], output_dir: str) -> GeneratedFile:
     """
     Generate a pytest conftest.py file.
@@ -421,15 +450,13 @@ def pytest_runtest_makereport(item, call):
             print(f"Failed to capture screenshot: {{e}}")
 """.format(
         output_dir=output_dir,
-        browser_params=", ".join(f'"{browser}"' for browser in browsers)
+        browser_params=", ".join(f'"{browser}"' for browser in browsers),
     )
     # Create file path
     file_path = os.path.join(output_dir, "tests", "conftest.py")
-    return GeneratedFile(
-        file_path=file_path,
-        content=content,
-        file_type="conftest"
-    )
+    return GeneratedFile(file_path=file_path, content=content, file_type="conftest")
+
+
 def generate_init_files(directories: list[str]) -> list[GeneratedFile]:
     """
     Generate __init__.py files for directories.
@@ -444,13 +471,11 @@ def generate_init_files(directories: list[str]) -> list[GeneratedFile]:
         content = """\"\"\"Generated test files.\"\"\"
 """
         files.append(
-            GeneratedFile(
-                file_path=file_path,
-                content=content,
-                file_type="init"
-            )
+            GeneratedFile(file_path=file_path, content=content, file_type="init")
         )
     return files
+
+
 def write_generated_files(files: list[GeneratedFile]) -> None:
     """
     Write generated files to disk.
@@ -463,6 +488,8 @@ def write_generated_files(files: list[GeneratedFile]) -> None:
         # Write file
         with open(file.file_path, "w", encoding="utf-8") as f:
             f.write(file.content)
+
+
 def generate_tests(crawl_data: CrawlData, config: Config) -> list[GeneratedFile]:
     """
     Generate tests from crawl data.
@@ -505,13 +532,9 @@ def generate_tests(crawl_data: CrawlData, config: Config) -> list[GeneratedFile]
     # Generate conftest
     conftest = generate_conftest(config.test.browsers, test_dir)
     # Generate __init__.py files
-    init_files = generate_init_files([
-        test_dir,
-        page_objects_dir,
-        tests_dir
-    ])
+    init_files = generate_init_files([test_dir, page_objects_dir, tests_dir])
     # Combine all files
     all_files = page_object_files + test_files + [conftest] + init_files
     # Write files
     write_generated_files(all_files)
-    return all_files 
+    return all_files

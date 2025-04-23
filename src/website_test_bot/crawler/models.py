@@ -1,47 +1,51 @@
 """Models for the crawler module."""
+
 from pydantic import BaseModel, Field
+
+
 class CrawlElement(BaseModel):
     """
     Represents an element found during crawling.
     Used to track interactive elements like buttons, links, inputs, etc.
     """
+
     selector: str = Field(..., description="CSS or XPath selector for the element")
     element_type: str = Field(..., description="Type of element (button, link, etc.)")
     text: str | None = Field(None, description="Text content of the element")
     attributes: dict[str, str] = Field(
         default_factory=dict, description="Element attributes"
     )
-    is_clickable: bool = Field(
-        False, description="Whether the element is clickable"
-    )
-    is_visible: bool = Field(
-        True, description="Whether the element is visible"
-    )
+    is_clickable: bool = Field(False, description="Whether the element is clickable")
+    is_visible: bool = Field(True, description="Whether the element is visible")
     screenshot_path: str | None = Field(
         None, description="Path to screenshot of the element"
     )
+
+
 class CrawlForm(BaseModel):
     """
     Represents a form found during crawling.
     Contains information about form fields and submit buttons.
     """
+
     form_selector: str = Field(..., description="CSS or XPath selector for the form")
     action: str | None = Field(None, description="Form action URL")
     method: str = Field("GET", description="Form HTTP method")
     fields: list[CrawlElement] = Field(
         default_factory=list, description="Form input fields"
     )
-    submit_button: CrawlElement | None = Field(
-        None, description="Form submit button"
-    )
+    submit_button: CrawlElement | None = Field(None, description="Form submit button")
     sample_data: dict[str, str] = Field(
         default_factory=dict, description="Sample data for form fields"
     )
+
+
 class CrawlPage(BaseModel):
     """
     Represents a page found during crawling.
     Contains information about the page's URL, title, and discovered elements.
     """
+
     url: str = Field(..., description="URL of the page")
     title: str = Field("", description="Page title")
     depth: int = Field(0, description="Depth of the page in the crawl")
@@ -60,20 +64,19 @@ class CrawlPage(BaseModel):
     screenshot_path: str | None = Field(
         None, description="Path to screenshot of the page"
     )
-    html_path: str | None = Field(
-        None, description="Path to HTML source of the page"
-    )
-    has_errors: bool = Field(
-        False, description="Whether the page has errors"
-    )
+    html_path: str | None = Field(None, description="Path to HTML source of the page")
+    has_errors: bool = Field(False, description="Whether the page has errors")
     error_message: str | None = Field(
         None, description="Error message if the page has errors"
     )
+
+
 class CrawlData(BaseModel):
     """
     Contains all data collected during the crawl process.
     Includes discovered pages, forms, and elements, as well as crawl statistics.
     """
+
     base_url: str = Field(..., description="Base URL of the crawled website")
     pages: dict[str, CrawlPage] = Field(
         default_factory=dict, description="Discovered pages by URL"
@@ -87,9 +90,9 @@ class CrawlData(BaseModel):
     failed_urls: dict[str, str] = Field(
         default_factory=dict, description="Failed URLs with error messages"
     )
-    stats: dict[str, int] = Field(
-        default_factory=dict, description="Crawl statistics"
-    )
+    stats: dict[str, int] = Field(default_factory=dict, description="Crawl statistics")
+
     class Config:
         """Pydantic config."""
-        arbitrary_types_allowed = True 
+
+        arbitrary_types_allowed = True

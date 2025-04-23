@@ -1,4 +1,5 @@
 """Command-line interface for the Website Test Bot."""
+
 import os
 from rich.console import Console
 from rich.panel import Panel
@@ -11,27 +12,38 @@ from website_test_bot.crawler import crawl_website_sync
 from website_test_bot.generator import generate_tests
 from website_test_bot.reporter import generate_report
 from website_test_bot.runner import run_tests
+
 # Create Typer app
 app = typer.Typer(
     name="Website Test Bot",
     help="Automated website testing bot using Playwright and Pytest.",
-    add_completion=False
+    add_completion=False,
 )
 # Create Rich console
 console = Console()
+
+
 def version_callback(value: bool) -> None:
     """Print version and exit."""
     if value:
         console.print(f"Website Test Bot version: {__version__}")
         raise typer.Exit()
+
+
 @app.callback()
 def main(
     _version: bool = typer.Option(
-        False, "--version", "-v", callback=version_callback, help="Show version and exit."
+        False,
+        "--version",
+        "-v",
+        callback=version_callback,
+        help="Show version and exit.",
     )
 ) -> None:
     """Website Test Bot - Automated website testing using Playwright and Pytest."""
     pass
+
+
 @app.command("run")
 def run(
     url: str = typer.Argument(..., help="URL of the website to test."),
@@ -41,21 +53,19 @@ def run(
     depth: int | None = typer.Option(
         None, "--depth", "-d", help="Maximum depth to crawl."
     ),
-    headful: bool = typer.Option(
-        False, "--headful", "-H", help="Run in headful mode."
-    ),
+    headful: bool = typer.Option(False, "--headful", "-H", help="Run in headful mode."),
     browsers: str | None = typer.Option(
         None,
         "--browsers",
         "-b",
-        help="Comma-separated list of browsers to test (chromium,firefox,webkit)."
+        help="Comma-separated list of browsers to test (chromium,firefox,webkit).",
     ),
     concurrency: int | None = typer.Option(
         None, "--concurrency", "-C", help="Number of concurrent tasks."
     ),
     output_dir: str | None = typer.Option(
         None, "--output-dir", "-o", help="Output directory for reports."
-    )
+    ),
 ) -> None:
     """Run the Website Test Bot on a target URL."""
     # Start time
@@ -68,7 +78,7 @@ def run(
     console.print(
         Panel.fit(
             "🤖 [bold green]Website Test Bot[/bold green] 🤖",
-            subtitle=f"v{__version__}"
+            subtitle=f"v{__version__}",
         )
     )
     console.print(f"Target URL: [blue]{url}[/blue]")
@@ -81,7 +91,7 @@ def run(
         "headful": headful,
         "browsers": browsers,
         "concurrency": concurrency,
-        "output_dir": output_dir
+        "output_dir": output_dir,
     }
     config = merge_cli_args(config, cli_args)
     # Print configuration summary
@@ -98,7 +108,7 @@ def run(
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Crawling...", total=None)
         crawl_data = crawl_website_sync(url, config)
@@ -109,7 +119,7 @@ def run(
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Generating...", total=None)
         test_files = generate_tests(crawl_data, config)
@@ -120,7 +130,7 @@ def run(
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Running...", total=None)
         test_results = run_tests(test_files, config)
@@ -135,7 +145,7 @@ def run(
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Generating...", total=None)
         report_path = generate_report(test_results, config)
@@ -156,4 +166,4 @@ def run(
 
 
 if __name__ == "__main__":
-    app() 
+    app()
