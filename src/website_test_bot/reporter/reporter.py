@@ -1,14 +1,13 @@
 """Report generator module for creating test reports."""
 
-from pathlib import Path
-from typing import list, dict
+from typing import List, Dict
 import os
 import datetime
 import json
 import shutil
 import zipfile
 from website_test_bot.config import Config
-from website_test_bot.runner.models import TestResults, TestCase, TestFile
+from website_test_bot.runner.models import TestResults
 
 
 def generate_summary_json(test_results: TestResults, output_path: str) -> str:
@@ -42,14 +41,14 @@ def generate_summary_json(test_results: TestResults, output_path: str) -> str:
     return output_path
 
 
-def copy_report_files(test_results: TestResults, output_dir: str) -> dict[str, str]:
+def copy_report_files(test_results: TestResults, output_dir: str) -> Dict[str, str]:
     """
     Copy report files to the output directory.
     Args:
         test_results: Test results
         output_dir: Output directory
     Returns:
-        dict[str, str]: Mapping of report type to file path
+        Dict[str, str]: Mapping of report type to file path
     """
     report_files = {}
     # Copy HTML report
@@ -65,14 +64,14 @@ def copy_report_files(test_results: TestResults, output_dir: str) -> dict[str, s
     return report_files
 
 
-def collect_screenshots(test_results: TestResults, output_dir: str) -> list[str]:
+def collect_screenshots(test_results: TestResults, output_dir: str) -> List[str]:
     """
     Collect screenshots for failed tests.
     Args:
         test_results: Test results
         output_dir: Output directory
     Returns:
-        list[str]: List of screenshot paths
+        List[str]: List of screenshot paths
     """
     screenshot_dir = os.path.join(output_dir, "screenshots")
     os.makedirs(screenshot_dir, exist_ok=True)
@@ -90,14 +89,14 @@ def collect_screenshots(test_results: TestResults, output_dir: str) -> list[str]
     return screenshot_paths
 
 
-def collect_videos(test_results: TestResults, output_dir: str) -> list[str]:
+def collect_videos(test_results: TestResults, output_dir: str) -> List[str]:
     """
     Collect videos for tests.
     Args:
         test_results: Test results
         output_dir: Output directory
     Returns:
-        list[str]: List of video paths
+        List[str]: List of video paths
     """
     video_dir = os.path.join(output_dir, "videos")
     os.makedirs(video_dir, exist_ok=True)
@@ -117,14 +116,14 @@ def collect_videos(test_results: TestResults, output_dir: str) -> list[str]:
     return video_paths
 
 
-def collect_traces(test_results: TestResults, output_dir: str) -> list[str]:
+def collect_traces(test_results: TestResults, output_dir: str) -> List[str]:
     """
     Collect traces for failed tests.
     Args:
         test_results: Test results
         output_dir: Output directory
     Returns:
-        list[str]: List of trace paths
+        List[str]: List of trace paths
     """
     trace_dir = os.path.join(output_dir, "traces")
     os.makedirs(trace_dir, exist_ok=True)
@@ -166,8 +165,8 @@ def create_archive(base_dir: str, output_path: str) -> str:
 
 def generate_html_index(
     test_results: TestResults,
-    report_files: dict[str, str],
-    artifacts: dict[str, list[str]],
+    report_files: Dict[str, str],
+    artifacts: Dict[str, List[str]],
     output_path: str,
 ) -> str:
     """
@@ -306,7 +305,7 @@ def generate_report(test_results: TestResults, config: Config) -> str:
     for artifact_dir in ["screenshots", "videos", "traces"]:
         os.makedirs(os.path.join(output_dir, artifact_dir), exist_ok=True)
     # Generate summary JSON
-    summary_path = generate_summary_json(
+    generate_summary_json(
         test_results, os.path.join(output_dir, "summary.json")
     )
     # Copy report files

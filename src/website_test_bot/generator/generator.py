@@ -3,12 +3,10 @@
 import os
 import re
 from .models import GeneratedFile, PageObject, ElementLocator, GeneratedTest
-import string
 from website_test_bot.config import Config
 from website_test_bot.crawler.models import (
     CrawlData,
     CrawlPage,
-    CrawlForm,
     CrawlElement,
 )
 

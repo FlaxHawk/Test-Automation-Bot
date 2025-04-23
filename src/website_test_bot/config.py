@@ -1,6 +1,6 @@
 """Configuration module for the Website Test Bot."""
 
-from typing import list, dict, Literal
+from typing import List, Dict, Literal, Any
 import os
 from pydantic import BaseModel, Field, field_validator, model_validator
 import yaml
@@ -18,7 +18,7 @@ class CrawlerConfig(BaseModel):
     wait_after_load_ms: int = Field(
         1000, ge=0, description="Wait time after page load in milliseconds"
     )
-    exclude_patterns: list[str] = Field(
+    exclude_patterns: List[str] = Field(
         default_factory=list, description="Patterns to exclude (regex)"
     )
     user_agent: str = Field(
@@ -40,7 +40,7 @@ class ViewportConfig(BaseModel):
 class TestConfig(BaseModel):
     """Configuration for the test module."""
 
-    browsers: list[Literal["chromium", "firefox", "webkit"]] = Field(
+    browsers: List[Literal["chromium", "firefox", "webkit"]] = Field(
         ["chromium"], min_length=1, description="Browsers to test"
     )
     headless: bool = Field(True, description="Whether to run in headless mode")
@@ -118,7 +118,7 @@ def load_config(config_path: str | None = None) -> Config:
     Returns:
         Config: Configuration object
     """
-    config_dict: dict[str] = {}
+    config_dict: Dict[str, Any] = {}
     # Try to load from provided path
     if config_path and os.path.exists(config_path):
         with open(config_path) as f:
@@ -135,7 +135,7 @@ def load_config(config_path: str | None = None) -> Config:
     return Config(**config_dict)
 
 
-def merge_cli_args(config: Config, cli_args: dict[str]) -> Config:
+def merge_cli_args(config: Config, cli_args: Dict[str, Any]) -> Config:
     """
     Merge CLI arguments into config.
     Args:

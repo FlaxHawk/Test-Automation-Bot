@@ -4,11 +4,10 @@ from typing import tuple, list
 import os
 import re
 from .models import CrawlData, CrawlPage, CrawlElement, CrawlForm
-from playwright.async_api import async_playwright, Browser, Page, ElementHandle
+from playwright.async_api import async_playwright, Browser, Page
 from rich.console import Console
 import asyncio
 import datetime
-import time
 import urllib.parse
 from website_test_bot.config import Config
 
@@ -181,7 +180,7 @@ async def extract_elements(page: Page, output_dir: str) -> list[CrawlElement]:
                     is_visible=is_visible,
                 )
                 elements.append(element)
-            except Exception as e:
+            except Exception:
                 # Ignore elements that can't be processed
                 pass
     return elements
