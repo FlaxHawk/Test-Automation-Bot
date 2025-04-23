@@ -79,6 +79,7 @@ class CrawlData(BaseModel):
     """
 
     base_url: str = Field(..., description="Base URL of the crawled website")
+    output_dir: str = Field(..., description="Output directory for crawl data")
     pages: Dict[str, CrawlPage] = Field(
         default_factory=dict, description="Discovered pages by URL"
     )

@@ -352,7 +352,7 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
     headless = force_headless or config.test.headless
     browser = await create_browser(config, headless)
     # Initialize crawl data
-    crawl_data = CrawlData(start_url=url, output_dir=output_dir)
+    crawl_data = CrawlData(base_url=url, output_dir=output_dir)
     # Initialize crawl queue and visited set
     to_crawl: List[Tuple[str, int, str | None]] = [(url, 0, None)]
     try:
