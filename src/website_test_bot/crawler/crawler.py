@@ -336,7 +336,7 @@ async def is_url_allowed(url: str, config: Config) -> bool:
 
 async def crawl_website(url: str, config: Config) -> CrawlData:
     """
-    Crawl a website and extract data.
+    Crawl a website to discover pages and elements.
     Args:
         url: URL of the website to crawl
         config: Bot configuration
@@ -347,7 +347,10 @@ async def crawl_website(url: str, config: Config) -> CrawlData:
     output_dir = os.path.join(config.report.output_dir, "crawl_data")
     os.makedirs(output_dir, exist_ok=True)
     # Create browser
-    browser = await create_browser(config, not config.test.headless)
+    # Always use headless mode in GitHub Actions environment
+    force_headless = "GITHUB_ACTIONS" in os.environ
+    headless = force_headless or config.test.headless
+    browser = await create_browser(config, headless)
     # Initialize crawl data
     crawl_data = CrawlData(start_url=url, output_dir=output_dir)
     # Initialize crawl queue and visited set

@@ -55,6 +55,9 @@ def run(
         None, "--depth", "-d", help="Maximum depth to crawl."
     ),
     headful: bool = typer.Option(False, "--headful", "-H", help="Run in headful mode."),
+    headless: bool = typer.Option(
+        False, "--headless", help="Run in headless mode (default)."
+    ),
     browsers: Optional[str] = typer.Option(
         None,
         "--browsers",
@@ -83,6 +86,14 @@ def run(
         )
     )
     console.print(f"Target URL: [blue]{url}[/blue]")
+
+    # Validate headful/headless flags (mutually exclusive)
+    if headful and headless:
+        console.print(
+            "[bold red]Error:[/bold red] Cannot specify both --headful and --headless"
+        )
+        raise typer.Exit(code=1)
+
     # Load configuration
     console.print("Loading configuration...")
     config = load_config(config_path)
@@ -90,6 +101,7 @@ def run(
     cli_args = {
         "depth": depth,
         "headful": headful,
+        "headless": headless,
         "browsers": browsers,
         "concurrency": concurrency,
         "output_dir": output_dir,

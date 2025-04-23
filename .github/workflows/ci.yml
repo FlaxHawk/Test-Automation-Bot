@@ -117,7 +117,7 @@ jobs:
         poetry run playwright install --with-deps chromium
     - name: Run demo site test
       run: |
-        poetry run bot run https://demo.playwright.dev/todomvc --depth 2
+        poetry run bot run https://demo.playwright.dev/todomvc --depth 2 --headless
     - name: Upload demo results
       uses: actions/upload-artifact@v4
       with:

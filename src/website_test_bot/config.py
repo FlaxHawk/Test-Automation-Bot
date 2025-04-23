@@ -150,6 +150,8 @@ def merge_cli_args(config: Config, cli_args: Dict[str, Any]) -> Config:
         config_dict["crawler"]["depth"] = cli_args["depth"]
     if "headful" in cli_args and cli_args["headful"]:
         config_dict["test"]["headless"] = False
+    if "headless" in cli_args and cli_args["headless"]:
+        config_dict["test"]["headless"] = True
     if "browsers" in cli_args and cli_args["browsers"]:
         browsers = cli_args["browsers"].split(",")
         config_dict["test"]["browsers"] = [

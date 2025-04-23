@@ -38,10 +38,10 @@ def setup_pytest_environment(
     Returns:
         Tuple[List[str], Dict[str, str]]: Pytest arguments and environment variables
     """
-    # Create report directories
+    # Create reports directory
     report_dir = os.path.join(test_dir, "reports")
     os.makedirs(report_dir, exist_ok=True)
-    # Determine report format
+    # Configure report arguments
     report_args = []
     if config.report.format in ["html", "both"]:
         report_args.extend(
@@ -61,8 +61,16 @@ def setup_pytest_environment(
     # Set environment variables
     env_vars = os.environ.copy()
     env_vars["PYTHONPATH"] = f"{test_dir}:{env_vars.get('PYTHONPATH', '')}"
-    if not config.test.headless:
+
+    # Ensure headless is always true in GitHub Actions
+    force_headless = "GITHUB_ACTIONS" in os.environ
+    headless = force_headless or config.test.headless
+
+    if not headless:
         env_vars["HEADLESS"] = "0"
+    else:
+        env_vars["HEADLESS"] = "1"  # Explicitly set headless mode
+
     if config.test.traces == "on":
         env_vars["PWTRACING"] = "1"
     elif config.test.traces == "on-failure":
