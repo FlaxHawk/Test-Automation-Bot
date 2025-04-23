@@ -305,9 +305,7 @@ def generate_report(test_results: TestResults, config: Config) -> str:
     for artifact_dir in ["screenshots", "videos", "traces"]:
         os.makedirs(os.path.join(output_dir, artifact_dir), exist_ok=True)
     # Generate summary JSON
-    generate_summary_json(
-        test_results, os.path.join(output_dir, "summary.json")
-    )
+    generate_summary_json(test_results, os.path.join(output_dir, "summary.json"))
     # Copy report files
     report_files = copy_report_files(test_results, output_dir)
     # Collect artifacts
