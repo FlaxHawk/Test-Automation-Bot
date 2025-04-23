@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Script to fix the most critical issues flagged by GitHub Actions."""
 
-import re
 from pathlib import Path
+import re
 def fix_typing_imports(content: str) -> str:
     """Fix deprecated typing imports."""
     # Remove typing imports that should be replaced with built-in types
-    content = re.sub(r'from typing import __([^,
-                     \n]*)(Dict|List|Set|Tuple)__([^,
+    content = re.sub(r'from typing import ([^,
+                     \n]*)(Dict|List|Set|Tuple)([^,
                      \n]*)(,
                      |\n)',
                      
@@ -39,7 +39,7 @@ def fix_typing_annotations(content: str) -> str:
     content = re.sub(r'Dict\[', 'dict[', content)
     content = re.sub(r'Set\[', 'set[', content)
     content = re.sub(r'Tuple\[', 'tuple[', content)
-    content = re.sub(r'Optional\[__([^]]+)\]', r'\1 | None', content)
+    content = re.sub(r'Optional\[([^]]+)\]', r'\1 | None', content)
     
     return content
 
@@ -54,7 +54,7 @@ def fix_unused_function_args(content: str) -> str:
         args = match.group(2)
         
         # ARG001 errors in the error list
-        arg001_errors = re.findall(r'ARG001 Unused function argument: `__([^`]+)`',
+        arg001_errors = re.findall(r'ARG001 Unused function argument: `([^`]+)`',
                                    content)
         
         # Replace unused args with _arg
@@ -70,7 +70,7 @@ def fix_unused_function_args(content: str) -> str:
     return content
 
 
-def fix_long_lines(content: str, max_length=88: str) -> str:
+def fix_long_lines(content: str, max_length: int = 88) -> str:
     """Fix some simple long lines by breaking them at commas."""
     lines = content.split('\n')
     result = []

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Script to finalize fixes for the remaining linter issues."""
 
-import re
 from pathlib import Path
-
-
+import re
 def fix_long_lines(content: str, max_length: int = 88) -> str:
     """Fix lines that exceed the maximum length."""
     lines = content.split("\n")

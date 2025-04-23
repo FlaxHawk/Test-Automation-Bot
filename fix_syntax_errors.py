@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Script to fix syntax errors and linting issues flagged by GitHub Actions."""
 
-from typing import List, Optional, Tuple
-import re
 from pathlib import Path
-
+import re
 def fix_runner_syntax(content: str) -> str:
     """Fix syntax errors in runner.py file."""
     # Fix missing comma in the list
@@ -86,17 +84,17 @@ def fix_generator_syntax(content: str) -> str:
 def fix_typing_annotations(content: str) -> str:
     """Replace old-style typing annotations with new ones."""
     # Replace typing.X import statements
-    content = re.sub(r'from typing import __([^,]*?)(Dict|List|Set|Tuple)__([^,]*?)(,|\n)',
-                    r'from typing import \1\3\4', content)
+    content = re.sub(r'from typing import (Dict|List|Set|Tuple)',
+                    r'from typing import ', content)
     
-    # Replace List[X] with list[X], Dict[X, Y] with dict[X, Y], etc.
+    # Replace List[X] with list[X][X, Y] with dict[X, Y], etc.
     content = re.sub(r'List\[', 'list[', content)
     content = re.sub(r'Dict\[', 'dict[', content)
     content = re.sub(r'Set\[', 'set[', content)
     content = re.sub(r'Tuple\[', 'tuple[', content)
     
     # Replace Optional[X] with X | None
-    content = re.sub(r'Optional\[__([^]]+)\]', r'\1 | None', content)
+    content = re.sub(r'Optional\[([^]]+)\]', r'\1 | None', content)
     
     return content
 
@@ -146,7 +144,7 @@ def fix_missing_commas(content: str) -> str:
 def fix_unused_args(content: str) -> str:
     """Fix unused function arguments by prefixing with underscore."""
     # Find ARG001 errors in the file
-    arg001_errors = re.findall(r'ARG001 Unused function argument: `__([^`]+)`', content)
+    arg001_errors = re.findall(r'ARG001 Unused function argument: `([^`]+)`', content)
     
     for arg in arg001_errors:
         # Replace the argument with prefixed underscore
@@ -159,10 +157,10 @@ def fix_unused_args(content: str) -> str:
 def fix_open_mode(content: str) -> str:
     """Fix unnecessary open mode parameters."""
     # Replace redundant mode and encoding parameters
-    content = re.sub(r"open\(__([^,]+),\s*'r',\s*encoding='utf-8'\)",
+    content = re.sub(r"open\(([^,]+),\s*'r',\s*encoding='utf-8'\)",
                      r"open(\1, encoding='utf-8')",
                      content)
-    content = re.sub(r"open\(__([^,]+),\s*'r'\)", r"open(\1)", content)
+    content = re.sub(r"open\(([^,]+),\s*'r'\)", r"open(\1)", content)
     
     return content
 
@@ -172,7 +170,7 @@ def fix_missing_type_annotations(content: str) -> str:
     # Find functions missing return types
     func_pattern = r'def ([a-zA-Z0-9_]+)\s*\((.*?)\):'
     
-    def add_return_type(match):
+    def add_return_type(match) -> str:
         func_name = match.group(1)
         args = match.group(2)
         
@@ -180,7 +178,7 @@ def fix_missing_type_annotations(content: str) -> str:
         typed_args = []
         for arg in args.split(','):
             arg = arg.strip()
-            if arg and not ':' in arg and arg != 'self':
+            if arg and ':' not in arg and arg != 'self':
                 typed_args.append(f"{arg}: str")
             else:
                 typed_args.append(arg)

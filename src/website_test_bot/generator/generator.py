@@ -1,5 +1,4 @@
 """Test generator module for creating test files from crawl data."""
-from typing import list, List, Set, Tuple
 import os
 import re
 from .models import GeneratedFile, PageObject, ElementLocator, GeneratedTest

@@ -1,5 +1,5 @@
 """Configuration module for the Website Test Bot."""
-from typing import list, dict, Any, Literal
+from typing import list, dict, Literal
 import os
 from pydantic import BaseModel, Field, field_validator, model_validator
 import yaml
@@ -99,7 +99,7 @@ def load_config(config_path: str | None = None) -> Config:
     Returns:
         Config: Configuration object
     """
-    config_dict: dict[str, Any] = {}
+    config_dict: dict[str] = {}
     # Try to load from provided path
     if config_path and os.path.exists(config_path):
         with open(config_path) as f:
@@ -114,7 +114,7 @@ def load_config(config_path: str | None = None) -> Config:
                 break
     # Create config object
     return Config(**config_dict)
-def merge_cli_args(config: Config, cli_args: dict[str, Any]) -> Config:
+def merge_cli_args(config: Config, cli_args: dict[str]) -> Config:
     """
     Merge CLI arguments into config.
     Args:

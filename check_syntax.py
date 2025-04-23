@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Script to check for syntax errors in Python files."""
 
+from pathlib import Path
 import ast
 import sys
-from pathlib import Path
-
-
 def check_file(file_path: Path) -> int:
     """
     Check a file for syntax errors.

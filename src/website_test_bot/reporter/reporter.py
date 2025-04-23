@@ -1,7 +1,7 @@
 """Report generator module for creating test reports."""
-from typing import list, dict, List, Optional, Union, Any
-import os
 from pathlib import Path
+from typing import list, dict
+import os
 import datetime
 import json
 import shutil

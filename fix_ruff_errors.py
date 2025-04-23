@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
 """Script to automatically fix common ruff errors."""
 
-import re
 from pathlib import Path
+import re
 def fix_typing_annotations(content: str) -> str:
     """Replace old-style typing annotations with new ones."""
     # Replace typing.X import statements
-    content = re.sub(r'from typing import ([^,
-                     ]*?)(Dict|List|Set|Tuple|Optional|Union|Any)([^,
-                     ]*?)(,
-                     |\n)',
-                     
+    content = re.sub(r'from typing import ([^,\n]*?)(Dict|List|Set|Tuple|Optional|Union|Any)([^,\n]*?)(,|\n)',
                     lambda m: m.group(0) if m.group(2) in content else m.group(1) + m.group(3) + m.group(4),
-                                      
-                                      
-                                      
-                                      
                     content)
     
     # Replace list[X] with list[X], dict[X, Y] with dict[X, Y], etc. in type annotations
@@ -53,7 +45,7 @@ def fix_imports(content: str) -> str:
     return content
 
 
-def fix_line_length(content: str, max_length=88: str) -> str:
+def fix_line_length(content: str, max_length: int = 88) -> str:
     """Attempt to fix lines that are too long."""
     # This is a very simple approach - a proper fix would be more complex
     lines = content.split('\n')

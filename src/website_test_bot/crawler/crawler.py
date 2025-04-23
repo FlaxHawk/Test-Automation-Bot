@@ -1,5 +1,5 @@
 """Crawler module for discovering website pages and elements."""
-from typing import tuple, list, List, Optional, Set, Tuple
+from typing import tuple, list
 import os
 import re
 from .models import CrawlData, CrawlPage, CrawlElement, CrawlForm
