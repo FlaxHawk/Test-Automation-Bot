@@ -1,7 +1,5 @@
 # Website Test Bot
 
-[![CI](https://github.com/user/Test-Automation-Bot/actions/workflows/ci.yml/badge.svg)](https://github.com/user/Test-Automation-Bot/actions/workflows/ci.yml)
-
 An intelligent test automation tool that crawls websites, automatically generates Playwright tests with Pytest, and provides comprehensive reports - all without writing a single line of code.
 
 ## Overview
