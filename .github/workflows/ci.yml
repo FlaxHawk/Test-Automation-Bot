@@ -133,6 +133,17 @@ jobs:
         # Create a directory for the bot output that's predictable
         mkdir -p ${GITHUB_WORKSPACE}/reports/demo
         
+        # Create pytest.ini in workspace to help with test discovery
+        cat > ${GITHUB_WORKSPACE}/pytest.ini << 'EOF'
+        [pytest]
+        pythonpath = .
+        testpaths = reports
+        python_files = test_*.py
+        python_classes = Test*
+        python_functions = test_*
+        addopts = -v
+        EOF
+        
         # Run the bot with detailed output
         poetry run bot run https://demo.playwright.dev/todomvc --depth 2 --headless
         

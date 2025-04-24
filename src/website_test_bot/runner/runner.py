@@ -45,19 +45,33 @@ def setup_pytest_environment(
     # Configure report arguments
     report_args = []
     if config.report.format in ["html", "both"]:
-        report_args.extend(
-            ["--html", os.path.join(report_dir, "report.html"), "--self-contained-html"]
-        )
+        html_report_path = os.path.join(report_dir, "report.html")
+        # Use absolute path to avoid path resolution issues
+        html_report_path = os.path.abspath(html_report_path)
+        report_args.extend(["--html", html_report_path, "--self-contained-html"])
     if config.report.format in ["junit", "both"]:
-        report_args.extend(["--junitxml", os.path.join(report_dir, "report.xml")])
+        junit_report_path = os.path.join(report_dir, "report.xml")
+        # Use absolute path to avoid path resolution issues
+        junit_report_path = os.path.abspath(junit_report_path)
+        report_args.extend(["--junitxml", junit_report_path])
 
     # Configure Pytest arguments
     pytest_args = [
         "-v",  # Verbose output
-        "--rootdir",
-        test_dir,  # Explicitly set the root directory
-        "--import-mode=importlib",  # More reliable import mode
     ]
+
+    # Add rootdir only if we're not in GitHub Actions
+    # In GitHub Actions, we'll let pytest find the root on its own
+    if "GITHUB_ACTIONS" not in os.environ:
+        pytest_args.extend(
+            [
+                "--rootdir",
+                test_dir,  # Explicitly set the root directory
+            ]
+        )
+
+    # Always use importlib mode for more reliable imports
+    pytest_args.append("--import-mode=importlib")
 
     # Add concurrency settings if more than one worker requested
     if config.test.concurrency > 1:
@@ -129,7 +143,9 @@ def run_pytest(
     pytest_args, env_vars = setup_pytest_environment(test_dir, config)
 
     # Properly set PYTHONPATH to include the test directory
-    env_vars["PYTHONPATH"] = f"{test_dir}:{env_vars.get('PYTHONPATH', '')}"
+    # Make sure we use absolute paths to avoid issues in CI
+    abs_test_dir = os.path.abspath(test_dir)
+    env_vars["PYTHONPATH"] = f"{abs_test_dir}:{env_vars.get('PYTHONPATH', '')}"
 
     # Use pytest directly with the test directory instead of specific files
     # This allows pytest to handle module imports and test discovery properly
@@ -139,17 +155,34 @@ def run_pytest(
             [], returncode=1, stdout="", stderr="No test files found"
         )
 
+    # Use absolute paths for test files
+    abs_test_files = [os.path.abspath(f) for f in test_files]
+
     # Build command
-    cmd = [sys.executable, "-m", "pytest"] + pytest_args + test_files
+    cmd = [sys.executable, "-m", "pytest"] + pytest_args + abs_test_files
 
     # Print debug information
     print(f"Running command: {' '.join(cmd)}")
-    print(f"Working directory: {test_dir}")
+    print(f"Working directory: {abs_test_dir}")
     print(f"PYTHONPATH: {env_vars.get('PYTHONPATH', 'Not set')}")
-    print(f"Test files: {test_files}")
+    print(f"Test files: {abs_test_files}")
+
+    # Create init files in all parent directories to ensure proper imports
+    parent_dirs = set()
+    for test_file in abs_test_files:
+        dir_path = os.path.dirname(test_file)
+        while dir_path and dir_path.startswith(abs_test_dir):
+            parent_dirs.add(dir_path)
+            dir_path = os.path.dirname(dir_path)
+
+    for dir_path in parent_dirs:
+        init_file = os.path.join(dir_path, "__init__.py")
+        if not os.path.exists(init_file):
+            with open(init_file, "w") as f:
+                f.write('"""Generated test directory."""\n')
 
     # Create a debug script to help with imports
-    with open(os.path.join(test_dir, "debug_imports.py"), "w") as f:
+    with open(os.path.join(abs_test_dir, "debug_imports.py"), "w") as f:
         f.write(
             """
 import sys
@@ -167,16 +200,16 @@ except ImportError as e:
 
     # Run debug script
     subprocess.run(
-        [sys.executable, os.path.join(test_dir, "debug_imports.py")],
+        [sys.executable, os.path.join(abs_test_dir, "debug_imports.py")],
         capture_output=True,
         text=True,
-        cwd=test_dir,
+        cwd=abs_test_dir,
         env=env_vars,
     )
 
     # Run command
     process = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=test_dir, env=env_vars
+        cmd, capture_output=True, text=True, cwd=abs_test_dir, env=env_vars
     )
 
     # Print output for debugging
